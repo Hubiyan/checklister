@@ -6,6 +6,7 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -56,6 +57,7 @@ Return STRICT JSON only with this shape (no markdown, no prose):\n\n{
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
@@ -64,12 +66,37 @@ Return STRICT JSON only with this shape (no markdown, no prose):\n\n{
     });
 
     const data = await response.json();
+    if (!response.ok) {
+      console.error('OpenAI error response:', data);
+      return new Response(JSON.stringify({ error: 'Upstream model error', details: data?.error || data }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const content = data?.choices?.[0]?.message?.content;
 
-    let parsed;
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
+      if (typeof content === 'string') {
+        // Try direct parse first (expected with response_format)
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          // Fallback: extract JSON block between first { and last }
+          const start = content.indexOf('{');
+          const end = content.lastIndexOf('}');
+          if (start !== -1 && end !== -1 && end > start) {
+            parsed = JSON.parse(content.slice(start, end + 1));
+          } else {
+            throw new Error('No JSON object found in content');
+          }
+        }
+      } else {
+        throw new Error('Empty or invalid content from model');
+      }
     } catch (e) {
+      console.error('Failed to parse model JSON:', e, 'content:', content);
       return new Response(JSON.stringify({ error: 'Failed to parse model JSON', raw: content }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

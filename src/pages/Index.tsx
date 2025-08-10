@@ -123,8 +123,9 @@ export default function Index() {
       setItems(next);
       toast.success("Checklist ready", { id: t });
     } catch (err: any) {
-      toast.error("AI categorization failed. Set your API key and try again.", { id: t });
-      console.error(err);
+      const msg = err?.message || "AI categorization failed";
+      toast.error(`${msg}. Check function logs.`, { id: t });
+      console.error('AI categorize error:', err);
     } finally {
       setLoading("idle");
     }
