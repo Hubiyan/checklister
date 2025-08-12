@@ -43,6 +43,17 @@ function parseLines(text: string): string[] {
 }
 
 function itemsFromAislesJson(json: any): ChecklistItem[] {
+  // Handle new JSON format with items array
+  if (Array.isArray(json?.items)) {
+    return json.items.map((item: any) => ({
+      id: crypto.randomUUID(),
+      name: item.input || item.name || "",
+      aisle: item.category || item.aisle || "Other / Miscellaneous",
+      checked: false,
+    }));
+  }
+
+  // Fallback to old format
   const aisles: Record<string, string[]> = json?.aisles || {};
   const out: ChecklistItem[] = [];
   for (const [aisle, list] of Object.entries(aisles)) {
