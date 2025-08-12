@@ -4,7 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Tesseract from "tesseract.js";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Image, ArrowRight, AlertTriangle } from "lucide-react";
+import { Camera, Image, ArrowRight, AlertTriangle, CheckCircle, Circle, Plus } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Separator } from '@/components/ui/separator';
 
 // Simple aisle list used for ordering - matching the design
 const DEFAULT_AISLES = [
@@ -83,6 +85,7 @@ export default function Index() {
   const [ocrProgress, setOcrProgress] = useState<number>(0);
   const [loading, setLoading] = useState<"idle" | "ocr" | "ai">("idle");
   const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   // Load/save local state
   useEffect(() => {
@@ -180,12 +183,17 @@ export default function Index() {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked } : i)));
   };
 
-  const newList = () => {
+  const handleNewList = () => {
+    setShowClearDialog(true);
+  };
+
+  const confirmNewList = () => {
     setItems([]);
     setText("");
     setFile(null);
     setScreen("input");
     setInputMode("text");
+    setShowClearDialog(false);
   };
 
   if (screen === "output") {
@@ -199,57 +207,72 @@ export default function Index() {
           </div>
 
           {/* Checklist */}
-          <div className="space-y-8">
-            {grouped.map(({ aisle, items }) => (
-              <section key={aisle} className="space-y-4">
-                <h2 className="text-2xl font-semibold text-foreground">{aisle}</h2>
-                <div className="space-y-3">
-                  {items.map((item) => (
-                    <div key={item.id} className={`p-4 rounded-lg border transition-all ${
-                      item.checked 
-                        ? 'bg-accent border-accent' 
-                        : 'bg-card border-border'
-                    }`}>
-                      <label 
-                        htmlFor={item.id} 
-                        className="flex items-center gap-3 cursor-pointer select-none"
+          <div className="space-y-6 pb-20">
+            {grouped.map(({ aisle, items }, index) => (
+              <section key={aisle}>
+                {index > 0 && (
+                  <Separator className="mb-6 bg-[hsl(var(--separator))] h-[0.5px]" />
+                )}
+                <div className="space-y-2">
+                  <h2 className="text-base font-medium text-foreground">{aisle}</h2>
+                  <div className="space-y-0 mt-2">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
+                          item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-transparent'
+                        }`}
+                        onClick={() => toggleItem(item.id, !item.checked)}
                       >
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                          item.checked 
-                            ? 'bg-accent border-accent' 
-                            : 'border-muted-foreground'
-                        }`}>
-                          {item.checked && (
-                            <div className="w-3 h-3 rounded-full bg-white"></div>
+                        <div className="flex-shrink-0">
+                          {item.checked ? (
+                            <CheckCircle className="w-6 h-6 text-white" />
+                          ) : (
+                            <Circle className="w-6 h-6 text-white" />
                           )}
                         </div>
-                        <span className={`text-lg ${item.checked ? 'text-white' : 'text-foreground'}`}>
+                        <span
+                          className={`flex-1 text-sm ${
+                            item.checked ? 'line-through text-white/70' : 'text-white'
+                          }`}
+                        >
                           {item.name}
                         </span>
-                      </label>
-                      <input
-                        type="checkbox"
-                        id={item.id}
-                        checked={item.checked}
-                        onChange={(e) => toggleItem(item.id, e.target.checked)}
-                        className="sr-only"
-                      />
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
             ))}
           </div>
 
-          {/* New List Button */}
-          <div className="pt-4">
-            <Button 
-              onClick={newList}
-              className="w-full bg-card hover:bg-muted border border-border text-foreground py-4 h-auto rounded-2xl text-lg font-medium"
-            >
-              New list
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+          {/* Fixed New List Button */}
+          <div className="fixed bottom-6 left-4 right-4">
+            <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  onClick={handleNewList}
+                  className="w-full py-4 h-auto text-lg font-medium"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  New List
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-card border-border">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-foreground">Clear Shopping List</AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground">
+                    Are you sure you want to clear your current shopping list? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="text-foreground">Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmNewList}>
+                    Clear List
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </main>
@@ -269,12 +292,12 @@ export default function Index() {
 
         {/* Text Input Area */}
         <div className="space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 min-h-[240px]">
+          <div className="bg-card border border-border rounded-[0.75rem] p-6 min-h-[240px]">
             <Textarea
               placeholder="Tap to paste"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0"
+              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 rounded-[0.75rem]"
             />
           </div>
 
@@ -285,7 +308,7 @@ export default function Index() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-16 h-16 rounded-2xl bg-card hover:bg-muted border border-border p-0"
+                className="w-16 h-16 rounded-[0.75rem] bg-card hover:bg-muted border border-border p-0"
                 onClick={() => {
                   if (inputMode === "camera") {
                     setInputMode("text");
@@ -309,7 +332,7 @@ export default function Index() {
             <Button
               onClick={text.trim() ? handleFromText : handleFromImage}
               disabled={(!text.trim() && !file) || loading !== "idle"}
-              className="flex-1 bg-card hover:bg-muted border border-border text-foreground py-4 h-16 rounded-2xl text-lg font-medium"
+              className="flex-1 bg-card hover:bg-muted border border-border text-foreground py-4 h-16 rounded-[0.75rem] text-lg font-medium"
             >
               {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
               <ArrowRight className="ml-3 h-5 w-5" />
@@ -318,11 +341,11 @@ export default function Index() {
 
           {/* Camera/Photos Selection (when image mode is active) */}
           {inputMode === "camera" && (
-            <div className="bg-accent rounded-2xl p-4">
+            <div className="bg-accent rounded-[0.75rem] p-4">
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-xl text-lg font-medium flex flex-col items-center"
+                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -340,7 +363,7 @@ export default function Index() {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-xl text-lg font-medium flex flex-col items-center"
+                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';

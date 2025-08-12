@@ -15,7 +15,7 @@ All colors MUST be HSL.
     --popover: 210 24% 12%;
     --popover-foreground: 0 0% 100%;
     --primary: 0 0% 100%;
-    --primary-foreground: 210 24% 9%;
+    --primary-foreground: 120 12% 8%;
     --secondary: 210 16% 20%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 16% 20%;
@@ -36,6 +36,10 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 16% 20%;
     --sidebar-ring: 142 76% 36%;
+    
+    /* Custom colors for shopping list */
+    --checked-bg: 111 100% 15%;
+    --separator: 0 0% 38%;
   }
 
   .dark {
@@ -46,7 +50,7 @@ All colors MUST be HSL.
     --popover: 210 24% 12%;
     --popover-foreground: 0 0% 100%;
     --primary: 0 0% 100%;
-    --primary-foreground: 210 24% 9%;
+    --primary-foreground: 120 12% 8%;
     --secondary: 210 16% 20%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 16% 20%;
@@ -66,6 +70,10 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 16% 20%;
     --sidebar-ring: 142 76% 36%;
+    
+    /* Custom colors for shopping list */
+    --checked-bg: 111 100% 15%;
+    --separator: 0 0% 38%;
   }
 }
 
