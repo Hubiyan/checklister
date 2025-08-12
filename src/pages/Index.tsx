@@ -1,25 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Tesseract from "tesseract.js";
 import { supabase } from "@/integrations/supabase/client";
+import { Camera, Image, ArrowRight, AlertTriangle } from "lucide-react";
 
-// Simple aisle list used for ordering
+// Simple aisle list used for ordering - matching the design
 const DEFAULT_AISLES = [
   "Produce",
-  "Dairy",
+  "Dairy", 
   "Bakery",
-  "Meat/Seafood",
-  "Frozen",
-  "Pantry",
-  "Beverages",
-  "Household",
+  "Meat & Poultry",
+  "Frozen Food",
+  "Rice & Grains",
+  "Drinks & Beverages",
+  "Cleaning & Household",
   "Personal Care",
-  "uncategorized",
+  "Other / Miscellaneous",
 ] as const;
 
 type Aisle = (typeof DEFAULT_AISLES)[number];
@@ -78,7 +76,8 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
 }
 
 export default function Index() {
-  const [tab, setTab] = useState("type");
+  const [screen, setScreen] = useState<"input" | "output">("input");
+  const [inputMode, setInputMode] = useState<"text" | "camera">("text");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [ocrProgress, setOcrProgress] = useState<number>(0);
@@ -145,6 +144,9 @@ export default function Index() {
   const handleFromText = async () => {
     const list = parseLines(text);
     await categorize(list);
+    if (list.length > 0) {
+      setScreen("output");
+    }
   };
 
   const handleFromImage = async () => {
@@ -163,6 +165,9 @@ export default function Index() {
       const list = parseLines(ocrText || "");
       toast.success("Text extracted", { id: t });
       await categorize(list);
+      if (list.length > 0) {
+        setScreen("output");
+      }
     } catch (e) {
       console.error(e);
       toast.error("OCR failed", { id: t });
@@ -171,101 +176,190 @@ export default function Index() {
     }
   };
 
-  const markAll = (checked: boolean) => {
-    setItems((prev) => prev.map((i) => ({ ...i, checked })));
-  };
-
   const toggleItem = (id: string, checked: boolean) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked } : i)));
   };
 
-  const clearAll = () => {
+  const newList = () => {
     setItems([]);
     setText("");
     setFile(null);
+    setScreen("input");
+    setInputMode("text");
   };
 
+  if (screen === "output") {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="max-w-sm mx-auto px-4 py-6 space-y-6">
+          {/* Warning Banner */}
+          <div className="bg-muted/50 border border-border rounded-lg p-3 flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">This list will be lost if you reload this page.</p>
+          </div>
+
+          {/* Checklist */}
+          <div className="space-y-8">
+            {grouped.map(({ aisle, items }) => (
+              <section key={aisle} className="space-y-4">
+                <h2 className="text-2xl font-semibold text-foreground">{aisle}</h2>
+                <div className="space-y-3">
+                  {items.map((item) => (
+                    <div key={item.id} className={`p-4 rounded-lg border transition-all ${
+                      item.checked 
+                        ? 'bg-accent border-accent' 
+                        : 'bg-card border-border'
+                    }`}>
+                      <label 
+                        htmlFor={item.id} 
+                        className="flex items-center gap-3 cursor-pointer select-none"
+                      >
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          item.checked 
+                            ? 'bg-accent border-accent' 
+                            : 'border-muted-foreground'
+                        }`}>
+                          {item.checked && (
+                            <div className="w-3 h-3 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <span className={`text-lg ${item.checked ? 'text-white' : 'text-foreground'}`}>
+                          {item.name}
+                        </span>
+                      </label>
+                      <input
+                        type="checkbox"
+                        id={item.id}
+                        checked={item.checked}
+                        onChange={(e) => toggleItem(item.id, e.target.checked)}
+                        className="sr-only"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {/* New List Button */}
+          <div className="pt-4">
+            <Button 
+              onClick={newList}
+              className="w-full bg-card hover:bg-muted border border-border text-foreground py-4 h-auto rounded-2xl text-lg font-medium"
+            >
+              New list
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto max-w-2xl p-4 sm:p-6 space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Checklister — Smart Grocery Checklist</h1>
-          <p className="text-sm text-muted-foreground">Paste or type your list, or extract from an image. We’ll sort it by aisle.</p>
-        </header>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="max-w-sm mx-auto px-6 py-12 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <h1 className="text-4xl font-bold text-foreground">Checklister</h1>
+          <p className="text-muted-foreground text-lg">
+            Sort your groceries using AI ✨
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Import</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={tab} onValueChange={setTab} className="w-full">
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="type">Type / Paste</TabsTrigger>
-                <TabsTrigger value="image">Image</TabsTrigger>
-              </TabsList>
-              <TabsContent value="type" className="space-y-3">
-                <Textarea
-                  placeholder="e.g.\nbananas\n2% milk\nbread\nchicken thighs\nfrozen peas\n…"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className="min-h-[160px]"
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button onClick={handleFromText} disabled={!text.trim() || loading !== "idle"}>
-                    Generate checklist
-                  </Button>
-                </div>
-              </TabsContent>
-              <TabsContent value="image" className="space-y-3">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-                {loading === "ocr" && (
-                  <p className="text-sm text-muted-foreground">OCR progress: {ocrProgress}%</p>
-                )}
-                <div className="flex gap-2 justify-end">
-                  <Button onClick={handleFromImage} disabled={!file || loading !== "idle"}>
-                    Extract & generate
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* Text Input Area */}
+        <div className="space-y-6">
+          <div className="bg-card border border-border rounded-2xl p-6 min-h-[240px]">
+            <Textarea
+              placeholder="Tap to paste"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0"
+            />
+          </div>
 
-        {items.length > 0 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Your checklist</CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => markAll(true)}>Mark all</Button>
-                <Button variant="outline" onClick={() => markAll(false)}>Uncheck all</Button>
-                <Button variant="destructive" onClick={clearAll}>Clear</Button>
+          {/* Input Mode Selection */}
+          <div className="flex items-center gap-4">
+            {/* Image Input Button */}
+            <div className="relative">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-16 h-16 rounded-2xl bg-card hover:bg-muted border border-border p-0"
+                onClick={() => {
+                  if (inputMode === "camera") {
+                    setInputMode("text");
+                  } else {
+                    setInputMode("camera");
+                  }
+                }}
+              >
+                <Image className="h-6 w-6 text-foreground" />
+              </Button>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </div>
+
+            {/* Get Sorted Button */}
+            <Button
+              onClick={text.trim() ? handleFromText : handleFromImage}
+              disabled={(!text.trim() && !file) || loading !== "idle"}
+              className="flex-1 bg-card hover:bg-muted border border-border text-foreground py-4 h-16 rounded-2xl text-lg font-medium"
+            >
+              {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
+              <ArrowRight className="ml-3 h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Camera/Photos Selection (when image mode is active) */}
+          {inputMode === "camera" && (
+            <div className="bg-accent rounded-2xl p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-xl text-lg font-medium flex flex-col items-center"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) setFile(file);
+                    };
+                    input.click();
+                  }}
+                >
+                  <Camera className="h-6 w-6 mb-2" />
+                  Camera
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-xl text-lg font-medium flex flex-col items-center"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) setFile(file);
+                    };
+                    input.click();
+                  }}
+                >
+                  <Image className="h-6 w-6 mb-2" />
+                  Photos
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {grouped.map(({ aisle, items }) => (
-                <section key={aisle} className="space-y-3">
-                  <h2 className="text-lg font-medium">{aisle}</h2>
-                  <ul className="space-y-2">
-                    {items.map((it) => (
-                      <li key={it.id} className="flex items-center gap-3">
-                        <Checkbox id={it.id} checked={it.checked} onCheckedChange={(v) => toggleItem(it.id, Boolean(v))} />
-                        <label htmlFor={it.id} className="text-sm leading-none cursor-pointer select-none">
-                          {it.name}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </section>
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
