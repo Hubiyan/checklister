@@ -9,61 +9,109 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Simple rules-based fallback categorizer
+// Simple rules-based fallback categorizer with multilingual support
 function categorizeFallback(items: string[]) {
-  const aisles = {
-    "Produce": [] as string[],
-    "Dairy": [] as string[],
-    "Bakery": [] as string[],
-    "Meat/Seafood": [] as string[],
-    "Frozen": [] as string[],
-    "Pantry": [] as string[],
-    "Beverages": [] as string[],
-    "Household": [] as string[],
-    "Personal Care": [] as string[],
-  };
-  const uncategorized: string[] = [];
-
-  const rules: Array<{ aisle: keyof typeof aisles; keywords: string[] }> = [
-    { aisle: "Produce", keywords: ["apple", "banana", "lettuce", "tomato", "onion", "garlic", "spinach", "avocado", "carrot", "pepper", "cucumber", "broccoli", "herb", "cilantro", "parsley", "lime", "lemon", "berry", "grape", "mango", "potato", "sweet potato", "mushroom"] },
-    { aisle: "Dairy", keywords: ["milk", "cheese", "yogurt", "butter", "cream", "half-and-half", "eggs"] },
-    { aisle: "Bakery", keywords: ["bread", "bun", "bagel", "tortilla", "pastry", "roll", "croissant", "pita"] },
-    { aisle: "Meat/Seafood", keywords: ["chicken", "beef", "pork", "turkey", "salmon", "fish", "shrimp", "steak", "thigh", "breast", "ground"] },
-    { aisle: "Frozen", keywords: ["frozen", "ice cream", "pizza", "veggies", "fries", "nuggets", "waffles"] },
-    { aisle: "Pantry", keywords: ["rice", "pasta", "noodles", "bean", "beans", "lentil", "flour", "sugar", "salt", "pepper", "oil", "olive", "vinegar", "spice", "sauce", "tomato sauce", "cereal", "oats", "oatmeal", "tuna", "broth", "stock", "baking", "yeast", "chip", "crackers", "nut", "peanut butter", "jam", "honey"] },
-    { aisle: "Beverages", keywords: ["water", "soda", "juice", "coffee", "tea", "beer", "wine", "milk"] },
-    { aisle: "Household", keywords: ["paper towel", "toilet paper", "foil", "wrap", "bag", "trash", "detergent", "cleaner", "soap", "dish", "sponge"] },
-    { aisle: "Personal Care", keywords: ["shampoo", "conditioner", "toothpaste", "toothbrush", "deodorant", "soap", "razor", "lotion", "tissue"] },
+  const categories = [
+    "Fruits & Vegetables",
+    "Meat & Poultry", 
+    "Seafood",
+    "Dairy & Eggs",
+    "Bakery",
+    "Rice & Grains",
+    "Pasta, Noodles & Tomato Products",
+    "Spices & Masalas",
+    "Sauces, Oils & Condiments",
+    "Canned & Jarred Food",
+    "Tea, Coffee & Hot Drinks",
+    "Breakfast & Spreads",
+    "Snacks & Confectionery",
+    "Frozen Food",
+    "Baking Supplies",
+    "Drinks & Beverages",
+    "Cleaning & Household",
+    "Personal Care",
+    "Baby Products",
+    "Pet Products",
+    "Other / Miscellaneous"
   ];
 
-  const norm = (s: string) => s.toLowerCase().trim();
+  const rules: Array<{ category: string; keywords: string[] }> = [
+    { category: "Fruits & Vegetables", keywords: ["apple", "banana", "lettuce", "tomato", "onion", "garlic", "spinach", "avocado", "carrot", "pepper", "cucumber", "broccoli", "lauki", "doodhi", "sorakaya", "bottle gourd", "brinjal", "aubergine", "baingan", "eggplant", "bhindi", "okra", "capsicum", "bell pepper", "coriander", "cilantro", "dhania", "mint", "pudina", "karela", "bitter gourd"] },
+    { category: "Meat & Poultry", keywords: ["chicken", "beef", "pork", "turkey", "mutton", "lamb", "goat"] },
+    { category: "Seafood", keywords: ["fish", "salmon", "shrimp", "prawns", "crab", "lobster"] },
+    { category: "Dairy & Eggs", keywords: ["milk", "cheese", "yogurt", "butter", "cream", "eggs", "paneer", "labneh", "curd"] },
+    { category: "Bakery", keywords: ["bread", "bun", "bagel", "tortilla", "pastry", "roll", "croissant", "pita", "khubz"] },
+    { category: "Rice & Grains", keywords: ["rice", "wheat", "quinoa", "oats", "barley", "dal", "lentils", "beans", "rajma", "moong", "toor", "chana", "atta", "sooji", "rava", "semolina"] },
+    { category: "Pasta, Noodles & Tomato Products", keywords: ["pasta", "noodles", "spaghetti", "macaroni", "shirataki", "tomato paste", "tomato sauce"] },
+    { category: "Spices & Masalas", keywords: ["spice", "masala", "turmeric", "cumin", "coriander", "garam masala", "chili", "pepper"] },
+    { category: "Sauces, Oils & Condiments", keywords: ["oil", "olive oil", "vinegar", "sauce", "ketchup", "mustard", "mayo", "hummus", "tahini", "achar", "pickles"] },
+    { category: "Canned & Jarred Food", keywords: ["canned", "jarred", "pickled", "preserves", "jam"] },
+    { category: "Tea, Coffee & Hot Drinks", keywords: ["tea", "coffee", "chai", "cocoa", "hot chocolate"] },
+    { category: "Breakfast & Spreads", keywords: ["cereal", "oatmeal", "jam", "honey", "peanut butter", "nutella"] },
+    { category: "Snacks & Confectionery", keywords: ["chips", "crackers", "biscuits", "cookies", "chocolate", "candy", "nuts", "mixture", "namkeen"] },
+    { category: "Frozen Food", keywords: ["frozen", "ice cream", "pizza", "nuggets", "fries"] },
+    { category: "Baking Supplies", keywords: ["flour", "maida", "sugar", "salt", "baking powder", "yeast", "vanilla"] },
+    { category: "Drinks & Beverages", keywords: ["water", "juice", "soda", "beer", "wine", "soft drink"] },
+    { category: "Cleaning & Household", keywords: ["detergent", "soap", "cleaner", "paper towel", "toilet paper", "trash bag"] },
+    { category: "Personal Care", keywords: ["shampoo", "toothpaste", "deodorant", "lotion", "razor"] },
+    { category: "Baby Products", keywords: ["baby", "diaper", "formula", "baby food"] },
+    { category: "Pet Products", keywords: ["pet food", "dog food", "cat food", "pet"] }
+  ];
 
-  const placed = new Set<string>();
-  for (const item of items) {
-    const i = norm(item).replace(/^[-*\d.)\s]+/, "");
-    if (!i) continue;
-    let matched = false;
-    for (const rule of rules) {
-      if (rule.keywords.some((k) => i.includes(k))) {
-        if (!placed.has(i)) aisles[rule.aisle].push(i);
-        placed.add(i);
-        matched = true;
-        break;
+  function extractQuantityAndUnit(text: string): { qty?: number; unit?: string; cleanText: string } {
+    const qtyPatterns = [
+      /(\d+(?:\.\d+)?)\s*(kg|g|l|ml|pcs|pack|bunch|dozen)/i,
+      /x(\d+)/i,
+      /\((\d+)\)/,
+      /(\d+(?:\.\d+)?)\s*$/
+    ];
+
+    for (const pattern of qtyPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const qty = parseFloat(match[1]);
+        let unit = match[2]?.toLowerCase() || "";
+        if (pattern.source.includes("x")) unit = "pack";
+        if (pattern.source.includes("\\(")) unit = "pcs";
+        
+        const cleanText = text.replace(pattern, "").trim().replace(/[-\s]+$/, "");
+        return { qty, unit, cleanText };
       }
     }
-    if (!matched) {
-      if (!placed.has(i)) uncategorized.push(i);
-      placed.add(i);
+    
+    return { cleanText: text.trim() };
+  }
+
+  function categorizeItem(item: string) {
+    const { qty, unit, cleanText } = extractQuantityAndUnit(item);
+    const norm = cleanText.toLowerCase().trim();
+    
+    if (!norm) return null;
+
+    for (const rule of rules) {
+      if (rule.keywords.some(keyword => norm.includes(keyword.toLowerCase()))) {
+        return {
+          input: item,
+          normalized_name: cleanText.toLowerCase(),
+          category: rule.category,
+          ...(qty && { qty }),
+          ...(unit && { unit })
+        };
+      }
     }
+
+    return {
+      input: item,
+      normalized_name: cleanText.toLowerCase(),
+      category: "Other / Miscellaneous"
+    };
   }
 
-  // Deduplicate within aisles
-  for (const key of Object.keys(aisles) as Array<keyof typeof aisles>) {
-    const seen = new Set<string>();
-    aisles[key] = aisles[key].filter((x) => (seen.has(x) ? false : (seen.add(x), true)));
-  }
+  const processedItems = items
+    .map(item => categorizeItem(item))
+    .filter(item => item !== null);
 
-  return { aisles, uncategorized, source: "fallback" };
+  return { items: processedItems };
 }
 
 serve(async (req) => {
@@ -89,21 +137,32 @@ serve(async (req) => {
       });
     }
 
-    const system = `You are a helpful assistant that groups grocery items into supermarket aisles.
-Return STRICT JSON only with this shape (no markdown, no prose):\n\n{
-  "aisles": {
-    "Produce": string[],
-    "Dairy": string[],
-    "Bakery": string[],
-    "Meat/Seafood": string[],
-    "Frozen": string[],
-    "Pantry": string[],
-    "Beverages": string[],
-    "Household": string[],
-    "Personal Care": string[]
-  },
-  "uncategorized": string[]
-}\n\nRules:\n- Normalize items (lowercase, singular where natural).\n- Remove duplicates.\n- Keep concise item names (e.g., "bananas", "2% milk").\n- Only use the aisles above; if unsure, put in uncategorized.`;
+    const system = `You understand grocery items in Arabic, Hindi, Urdu, Tagalog, Malayalam, Tamil, and regional names. 
+
+ALLOWED CATEGORIES (use EXACT spelling):
+Fruits & Vegetables, Meat & Poultry, Seafood, Dairy & Eggs, Bakery, Rice & Grains, Pasta, Noodles & Tomato Products, Spices & Masalas, Sauces, Oils & Condiments, Canned & Jarred Food, Tea, Coffee & Hot Drinks, Breakfast & Spreads, Snacks & Confectionery, Frozen Food, Baking Supplies, Drinks & Beverages, Cleaning & Household, Personal Care, Baby Products, Pet Products, Other / Miscellaneous
+
+Return STRICT JSON only matching this schema:
+{
+  "items": [
+    {
+      "input": "exact user text",
+      "normalized_name": "english canonical name", 
+      "category": "one of the allowed categories",
+      "qty": number (if found),
+      "unit": "kg|g|l|ml|pcs|pack|bunch|dozen" (if found),
+      "notes": "additional descriptors" (if any)
+    }
+  ]
+}
+
+Rules:
+- Keep original input exactly as typed for display
+- Create normalized_name in English (singular, lowercase unless common plural like "eggs")
+- Extract quantities: "2 kg", "x3" means qty 3, "(12)" means qty 12
+- Regional mappings: lauki→bottle gourd, bhindi→okra, paneer→paneer, khubz→pita, etc.
+- If uncertain category, use "Other / Miscellaneous"
+- Omit qty/unit/notes if not present`;
 
     const user = `Items to categorize (JSON array):\n${JSON.stringify(items)}`;
 
