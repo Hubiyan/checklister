@@ -263,31 +263,33 @@ export default function Index() {
 
           {/* Fixed New List Button */}
           <div className="fixed bottom-6 left-4 right-4">
-            <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  onClick={handleNewList}
-                  className="w-full py-4 h-auto text-lg font-medium"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  New List
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-card border-border">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-foreground">Clear Shopping List</AlertDialogTitle>
-                  <AlertDialogDescription className="text-muted-foreground">
-                    Are you sure you want to clear your current shopping list? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="text-foreground">Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={confirmNewList}>
-                    Clear List
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="bg-[#121712] p-2 rounded-[0.75rem]">
+              <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    onClick={handleNewList}
+                    className="w-full py-4 h-auto text-lg font-medium"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    New List
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-card border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-foreground">Clear Shopping List</AlertDialogTitle>
+                    <AlertDialogDescription className="text-muted-foreground">
+                      Are you sure you want to clear your current shopping list? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="text-foreground">Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmNewList}>
+                      Clear List
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </main>
