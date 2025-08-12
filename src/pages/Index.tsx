@@ -196,6 +196,21 @@ export default function Index() {
     setShowClearDialog(false);
   };
 
+  const handleTextareaFocus = async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const clipboardText = await navigator.clipboard.readText();
+        if (clipboardText.trim() && !text.trim()) {
+          setText(clipboardText);
+          toast.success("Pasted from clipboard");
+        }
+      }
+    } catch (error) {
+      // Clipboard access denied or not available - fail silently
+      console.log("Clipboard access not available");
+    }
+  };
+
   if (screen === "output") {
     return (
       <main className="min-h-screen bg-background text-foreground">
@@ -297,7 +312,8 @@ export default function Index() {
               placeholder="Tap to paste"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 rounded-[0.75rem]"
+              onFocus={handleTextareaFocus}
+              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 focus:outline-none focus:ring-0 focus:border-none rounded-[0.75rem]"
             />
           </div>
 
