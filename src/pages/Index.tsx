@@ -262,7 +262,7 @@ export default function Index() {
           </div>
 
           {/* Fixed New List Button */}
-          <div className="fixed bottom-6 left-4 right-4">
+          <div className="fixed bottom-0 left-4 right-4">
             <div className="bg-[#121712] p-2 rounded-[0.75rem]">
               <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
                 <AlertDialogTrigger asChild>
