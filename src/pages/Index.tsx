@@ -308,7 +308,7 @@ export default function Index() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-16 h-16 rounded-[0.75rem] bg-card hover:bg-muted border border-border p-0"
+                className="w-16 h-16 rounded-[0.75rem] bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 p-0"
                 onClick={() => {
                   if (inputMode === "camera") {
                     setInputMode("text");
@@ -317,7 +317,7 @@ export default function Index() {
                   }
                 }}
               >
-                <Image className="h-6 w-6 text-foreground" />
+                <Image className="h-6 w-6 text-primary-foreground" />
               </Button>
               <input
                 type="file"
@@ -332,7 +332,7 @@ export default function Index() {
             <Button
               onClick={text.trim() ? handleFromText : handleFromImage}
               disabled={(!text.trim() && !file) || loading !== "idle"}
-              className="flex-1 bg-card hover:bg-muted border border-border text-foreground py-4 h-16 rounded-[0.75rem] text-lg font-medium"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-medium border-0"
             >
               {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
               <ArrowRight className="ml-3 h-5 w-5" />
@@ -345,7 +345,7 @@ export default function Index() {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -363,7 +363,7 @@ export default function Index() {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-muted border-0 text-foreground py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';

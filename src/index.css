@@ -10,7 +10,7 @@ All colors MUST be HSL.
   :root {
     --background: 120 12% 8%;
     --foreground: 0 0% 100%;
-    --card: 210 24% 12%;
+    --card: 120 22% 12%;
     --card-foreground: 0 0% 100%;
     --popover: 210 24% 12%;
     --popover-foreground: 0 0% 100%;
@@ -24,8 +24,8 @@ All colors MUST be HSL.
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 16% 20%;
-    --input: 210 16% 20%;
+    --border: 120 18% 22%;
+    --input: 120 18% 22%;
     --ring: 142 76% 36%;
     --radius: 0.75rem;
     --sidebar-background: 210 24% 9%;
@@ -45,7 +45,7 @@ All colors MUST be HSL.
   .dark {
     --background: 120 12% 8%;
     --foreground: 0 0% 100%;
-    --card: 210 24% 12%;
+    --card: 120 22% 12%;
     --card-foreground: 0 0% 100%;
     --popover: 210 24% 12%;
     --popover-foreground: 0 0% 100%;
@@ -59,8 +59,8 @@ All colors MUST be HSL.
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 16% 20%;
-    --input: 210 16% 20%;
+    --border: 120 18% 22%;
+    --input: 120 18% 22%;
     --ring: 142 76% 36%;
     --sidebar-background: 210 24% 9%;
     --sidebar-foreground: 0 0% 63%;
