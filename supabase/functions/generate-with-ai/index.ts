@@ -146,6 +146,14 @@ Fruits & Vegetables, Meat & Poultry, Seafood, Dairy & Eggs, Bakery, Rice & Grain
 
 CRITICAL CATEGORIZATION RULES (follow these EXACTLY):
 
+**RULE #1: ANALYZE ENTIRE DESCRIPTION** - Never categorize based on single keywords. Consider the complete item description, preparation state, packaging, and context.
+
+Examples:
+- "Grape juice" → Drinks & Beverages (NOT Fruits & Vegetables - juice is processed)
+- "Grilled chicken" → Meat & Poultry (NOT Hot Foods - still primarily meat)
+- "Frozen chicken ham" → Frozen Food (NOT Hot Foods - frozen state is key)
+- "Tomato paste" → Pasta, Noodles & Tomato Products (NOT Fruits & Vegetables - processed)
+
 1. PROCESSED vs FRESH FOODS: 
    - "tomato paste", "tomato sauce", "tomato puree" → Pasta, Noodles & Tomato Products (NOT Fruits & Vegetables)
    - Fresh tomatoes → Fruits & Vegetables
