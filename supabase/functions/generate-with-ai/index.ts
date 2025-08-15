@@ -9,281 +9,401 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Simple rules-based fallback categorizer with multilingual support
-function categorizeFallback(items: string[]) {
-  const categories = [
-    "Fruits & Vegetables",
-    "Meat & Poultry", 
-    "Seafood",
-    "Dairy & Eggs",
-    "Bakery",
-    "Rice & Grains",
-    "Pasta, Noodles & Tomato Products",
-    "Spices & Masalas",
-    "Sauces, Oils & Condiments",
-    "Canned & Jarred Food",
-    "Tea, Coffee & Hot Drinks",
-    "Breakfast & Spreads",
-    "Snacks & Confectionery",
-    "Frozen Food",
-    "Baking Supplies",
-    "Drinks & Beverages",
-    "Cleaning & Household",
-    "Personal Care",
-    "Baby Products",
-    "Pet Products",
-    "Other / Miscellaneous"
-  ];
+// UAE Supermarket Aisles (exact names as specified)
+const UAE_AISLES = [
+  "Fruits & Vegetables",
+  "Meat & Poultry",
+  "Seafood",
+  "Dairy & Eggs",
+  "Bakery",
+  "Rice & Grains",
+  "Pasta, Noodles & Tomato Products",
+  "Spices & Masalas",
+  "Sauces, Oils & Condiments",
+  "Canned & Jarred Food",
+  "Tea, Coffee & Hot Drinks",
+  "Breakfast & Spreads",
+  "Snacks & Confectionery",
+  "Frozen Food",
+  "Baking Supplies",
+  "Drinks & Beverages",
+  "Cleaning & Household",
+  "Personal Care",
+  "Baby Products",
+  "Pet Products",
+  "Other / Miscellaneous"
+] as const;
 
-  const rules: Array<{ category: string; keywords: string[] }> = [
-    { category: "Fruits & Vegetables", keywords: ["apple", "banana", "lettuce", "fresh tomato", "fresh tomatoes", "onion", "garlic", "spinach", "avocado", "carrot", "pepper", "cucumber", "broccoli", "lauki", "doodhi", "sorakaya", "bottle gourd", "brinjal", "aubergine", "baingan", "eggplant", "bhindi", "okra", "lady's finger", "ladyfinger", "capsicum", "bell pepper", "coriander", "cilantro", "dhania", "mint", "pudina", "karela", "bitter gourd", "potato", "sweet potato", "cauliflower", "cabbage", "beans", "peas", "corn", "leek", "celery", "radish", "beet", "turnip", "ginger", "lemon", "lime", "fresh orange", "grape", "strawberry", "mango", "pineapple", "watermelon", "cantaloupe", "kiwi", "peach", "plum", "cherry", "blueberry", "raspberry", "blackberry", "coconut", "dates", "figs", "pomegranate", "guava", "papaya", "jackfruit", "dragon fruit", "passion fruit", "kale", "arugula", "chard", "bok choy", "napa", "romaine", "iceberg", "spring mix", "herbs", "basil", "oregano", "thyme", "rosemary", "sage", "parsley", "chives", "scallions", "shallots", "leeks", "fennel", "asparagus", "artichoke", "brussels sprouts", "zucchini", "squash", "pumpkin", "sweet corn", "baby corn", "mushrooms", "shiitake", "portobello", "button mushroom", "enoki", "oyster mushroom"] },
-    { category: "Meat & Poultry", keywords: ["meat", "chicken", "beef", "pork", "turkey", "mutton", "lamb", "goat", "duck", "ham", "bacon", "sausage", "ground beef", "ground turkey", "ground chicken", "steak", "roast", "ribs", "wings", "thighs", "breast", "drumsticks", "tenderloin", "sirloin", "ribeye", "filet", "brisket", "chuck", "round", "flank", "skirt", "short ribs", "oxtail", "liver", "kidney", "heart", "tongue", "tripe", "chorizo", "salami", "pepperoni", "prosciutto", "pancetta", "canadian bacon", "turkey bacon", "chicken sausage", "bratwurst", "kielbasa", "hot dogs", "frankfurters", "vienna sausage", "boneless beef", "boneless chicken", "boneless pork"] },
-    { category: "Seafood", keywords: ["fish", "salmon", "shrimp", "prawns", "crab", "lobster", "tuna", "cod", "halibut", "mahi mahi", "tilapia", "catfish", "bass", "trout", "mackerel", "sardines", "anchovies", "herring", "sole", "flounder", "snapper", "grouper", "sea bass", "swordfish", "shark", "eel", "octopus", "squid", "calamari", "scallops", "clams", "mussels", "oysters", "abalone", "sea urchin", "caviar", "roe", "surimi", "imitation crab", "fish sticks", "fish fillets", "whole fish", "fish steaks"] },
-    { category: "Dairy & Eggs", keywords: ["milk", "cheese", "yogurt", "butter", "cream", "eggs", "paneer", "labneh", "curd", "cottage cheese", "ricotta", "mozzarella", "cheddar", "swiss", "gouda", "brie", "camembert", "blue cheese", "parmesan", "feta", "goat cheese", "cream cheese", "sour cream", "heavy cream", "whipping cream", "half and half", "buttermilk", "evaporated milk", "condensed milk", "powdered milk", "almond milk", "soy milk", "oat milk", "coconut milk", "rice milk", "cashew milk", "hemp milk", "egg whites", "egg yolks", "quail eggs", "duck eggs", "greek yogurt", "kefir", "ice cream", "gelato", "sherbet", "sorbet", "frozen yogurt", "whipped cream", "mascarpone", "clotted cream"] },
-    { category: "Bakery", keywords: ["bread", "bun", "bagel", "tortilla", "pastry", "roll", "croissant", "pita", "khubz", "naan", "roti", "chapati", "paratha", "baguette", "sourdough", "whole wheat", "white bread", "rye bread", "pumpernickel", "ciabatta", "focaccia", "pretzel", "dinner roll", "hamburger bun", "hot dog bun", "english muffin", "muffin", "cupcake", "donut", "danish", "eclair", "cream puff", "pie", "tart", "cake", "cookie", "brownie", "scone", "biscuit", "waffle", "pancake", "crepe", "strudel", "baklava", "phyllo", "puff pastry", "pizza dough", "pie crust", "breadcrumbs", "croutons"] },
-    { category: "Rice & Grains", keywords: ["rice", "wheat", "quinoa", "oats", "barley", "dal", "lentils", "beans", "rajma", "moong", "toor", "chana", "atta", "sooji", "rava", "semolina", "brown rice", "white rice", "jasmine rice", "basmati rice", "arborio rice", "wild rice", "black rice", "red rice", "sticky rice", "sushi rice", "instant rice", "rice cakes", "rice flour", "wheat flour", "whole wheat flour", "all purpose flour", "bread flour", "cake flour", "pastry flour", "self rising flour", "cornmeal", "polenta", "grits", "couscous", "bulgur", "farro", "spelt", "kamut", "millet", "buckwheat", "amaranth", "teff", "chia seeds", "flax seeds", "hemp seeds", "sunflower seeds", "pumpkin seeds", "sesame seeds", "poppy seeds", "black beans", "kidney beans", "pinto beans", "navy beans", "lima beans", "garbanzo beans", "chickpeas", "black eyed peas", "split peas", "green lentils", "red lentils", "yellow lentils", "black lentils"] },
-    { category: "Pasta, Noodles & Tomato Products", keywords: ["pasta", "noodles", "spaghetti", "macaroni", "shirataki", "tomato paste", "tomato sauce", "penne", "fusilli", "rigatoni", "farfalle", "linguine", "fettuccine", "angel hair", "lasagna", "ravioli", "tortellini", "gnocchi", "orzo", "shells", "elbows", "rotini", "bowtie", "ziti", "mostaccioli", "cannelloni", "manicotti", "pappardelle", "tagliatelle", "bucatini", "orecchiette", "gemelli", "cavatappi", "campanelle", "radiatori", "conchiglie", "ditalini", "acini de pepe", "ramen", "udon", "soba", "rice noodles", "glass noodles", "cellophane noodles", "lo mein", "chow mein", "pad thai noodles", "vermicelli", "egg noodles", "wheat noodles", "instant noodles", "tomatoes", "crushed tomatoes", "diced tomatoes", "whole tomatoes", "tomato puree", "marinara", "pizza sauce", "pasta sauce", "arrabbiata", "puttanesca", "alfredo"] },
-    { category: "Spices & Masalas", keywords: ["spice", "masala", "turmeric", "cumin", "coriander", "garam masala", "chili", "pepper", "salt", "black pepper", "white pepper", "red pepper", "cayenne", "paprika", "garlic powder", "onion powder", "oregano", "basil", "thyme", "rosemary", "sage", "parsley", "cilantro", "dill", "bay leaves", "cardamom", "cinnamon", "cloves", "nutmeg", "mace", "allspice", "ginger", "galangal", "lemongrass", "kaffir lime", "star anise", "fennel", "fenugreek", "mustard seeds", "sesame seeds", "poppy seeds", "nigella", "ajwain", "asafoetida", "hing", "curry leaves", "mint", "saffron", "vanilla", "almond extract", "lemon extract", "orange zest", "lime zest", "chipotle", "adobo", "taco seasoning", "italian seasoning", "herbs de provence", "za'atar", "sumac", "harissa", "ras el hanout", "berbere", "chinese five spice", "old bay", "cajun seasoning", "jerk seasoning", "tandoori masala", "biryani masala", "chat masala", "sambar powder", "rasam powder", "curry powder", "madras curry", "vindaloo", "tikka masala"] },
-    { category: "Sauces, Oils & Condiments", keywords: ["oil", "olive oil", "vinegar", "sauce", "ketchup", "mustard", "mayo", "hummus", "tahini", "achar", "pickles", "vegetable oil", "canola oil", "sunflower oil", "coconut oil", "sesame oil", "avocado oil", "grapeseed oil", "walnut oil", "flaxseed oil", "peanut oil", "corn oil", "safflower oil", "extra virgin", "virgin", "cold pressed", "balsamic vinegar", "apple cider vinegar", "white vinegar", "rice vinegar", "red wine vinegar", "white wine vinegar", "champagne vinegar", "sherry vinegar", "malt vinegar", "mayonnaise", "miracle whip", "aioli", "ranch", "caesar", "thousand island", "blue cheese", "honey mustard", "dijon mustard", "yellow mustard", "whole grain mustard", "stone ground", "spicy mustard", "hot sauce", "tabasco", "sriracha", "buffalo sauce", "barbecue sauce", "teriyaki", "soy sauce", "tamari", "coconut aminos", "fish sauce", "oyster sauce", "hoisin", "sweet and sour", "duck sauce", "plum sauce", "chili sauce", "garlic sauce", "ginger sauce", "peanut sauce", "satay sauce", "curry sauce", "tikka sauce", "masala sauce", "salsa", "guacamole", "queso", "cheese sauce", "alfredo sauce", "pesto", "marinara", "pizza sauce", "enchilada sauce", "mole", "chimichurri", "tzatziki", "hollandaise", "bearnaise", "worcestershire", "a1 sauce", "steak sauce", "tartar sauce", "cocktail sauce", "horseradish", "wasabi", "relish", "pickle relish", "sweet relish", "capers", "olives", "green olives", "black olives", "kalamata", "stuffed olives", "olive tapenade", "sun dried tomatoes", "roasted peppers"] },
-    { category: "Canned & Jarred Food", keywords: ["canned", "jarred", "pickled", "preserves", "jam", "jelly", "marmalade", "fruit spread", "applesauce", "cranberry sauce", "canned tomatoes", "canned corn", "canned beans", "canned peas", "canned carrots", "canned beets", "canned spinach", "canned pumpkin", "canned sweet potato", "canned fruit", "canned peaches", "canned pears", "canned pineapple", "canned mandarin", "fruit cocktail", "canned tuna", "canned salmon", "canned sardines", "canned mackerel", "canned chicken", "canned beef", "canned ham", "spam", "corned beef", "potted meat", "vienna sausage", "canned soup", "broth", "stock", "bouillon", "consomme", "bisque", "chowder", "minestrone", "chicken noodle", "tomato soup", "vegetable soup", "split pea soup", "lentil soup", "bean soup", "chili", "canned chili", "refried beans", "baked beans", "black beans", "kidney beans", "pinto beans", "navy beans", "garbanzo beans", "white beans", "cannellini", "great northern", "pickles", "dill pickles", "sweet pickles", "bread and butter", "gherkins", "cornichons", "pickled onions", "pickled beets", "pickled peppers", "sauerkraut", "kimchi", "relish", "pickle relish", "sweet relish", "artichoke hearts", "hearts of palm", "water chestnuts", "bamboo shoots", "baby corn", "mushrooms", "roasted peppers", "salsa", "picante", "enchilada sauce", "taco sauce", "green chiles", "jalapenos", "chipotle peppers", "tomato paste", "tomato sauce", "crushed tomatoes", "diced tomatoes", "whole tomatoes", "tomato puree", "coconut milk", "evaporated milk", "condensed milk", "heavy cream"] },
-    { category: "Tea, Coffee & Hot Drinks", keywords: ["tea", "coffee", "chai", "cocoa", "hot chocolate", "green tea", "black tea", "white tea", "oolong", "pu erh", "herbal tea", "chamomile", "peppermint", "ginger tea", "lemon tea", "earl grey", "english breakfast", "irish breakfast", "assam", "darjeeling", "ceylon", "jasmine tea", "matcha", "sencha", "gyokuro", "hojicha", "genmaicha", "rooibos", "honeybush", "yerba mate", "guayusa", "coffee beans", "ground coffee", "instant coffee", "espresso", "decaf", "arabica", "robusta", "french roast", "italian roast", "medium roast", "light roast", "dark roast", "breakfast blend", "house blend", "single origin", "fair trade", "organic coffee", "cold brew", "iced coffee", "cappuccino", "latte", "mocha", "americano", "macchiato", "frappuccino", "coffee pods", "k cups", "nespresso", "dolce gusto", "coffee filters", "coffee creamer", "non dairy creamer", "coffee whitener", "sugar", "sweetener", "artificial sweetener", "stevia", "honey", "agave", "maple syrup", "simple syrup", "flavored syrup", "vanilla syrup", "caramel syrup", "hazelnut syrup", "chocolate syrup", "hot cocoa", "drinking chocolate", "malted milk", "ovaltine", "nestquik", "protein powder", "meal replacement"] },
-    { category: "Breakfast & Spreads", keywords: ["cereal", "oatmeal", "jam", "honey", "peanut butter", "nutella", "granola", "muesli", "corn flakes", "rice krispies", "cheerios", "frosted flakes", "fruit loops", "lucky charms", "cocoa puffs", "cinnamon toast crunch", "honey nut", "raisin bran", "bran flakes", "shredded wheat", "wheat chex", "rice chex", "corn chex", "special k", "all bran", "fiber one", "kashi", "nature valley", "quaker oats", "steel cut oats", "rolled oats", "instant oats", "oat bran", "wheat germ", "quinoa flakes", "amaranth flakes", "buckwheat flakes", "millet flakes", "pancake mix", "waffle mix", "bisquick", "aunt jemima", "mrs butterworth", "log cabin", "maple syrup", "pancake syrup", "corn syrup", "golden syrup", "molasses", "treacle", "agave nectar", "honey", "raw honey", "manuka honey", "clover honey", "wildflower honey", "orange blossom honey", "acacia honey", "buckwheat honey", "jam", "jelly", "preserves", "marmalade", "fruit spread", "apple butter", "pumpkin butter", "almond butter", "cashew butter", "sunflower butter", "tahini", "sesame butter", "hazelnut spread", "chocolate spread", "cookie butter", "speculoos", "marshmallow fluff", "caramel spread", "dulce de leche", "condensed milk", "evaporated milk"] },
-    { category: "Snacks & Confectionery", keywords: ["chips", "crackers", "biscuits", "cookies", "chocolate", "candy", "nuts", "mixture", "namkeen", "popcorn", "potato chips", "tortilla chips", "corn chips", "pita chips", "bagel chips", "pretzels", "rice cakes", "corn cakes", "wheat thins", "triscuits", "ritz", "saltines", "club crackers", "graham crackers", "animal crackers", "goldfish", "cheez its", "cheese crackers", "water crackers", "oyster crackers", "matzo", "lavosh", "melba toast", "breadsticks", "grissini", "cookies", "chocolate chip", "oatmeal raisin", "sugar cookies", "ginger snaps", "shortbread", "wafers", "sandwich cookies", "oreos", "fig newtons", "girl scout cookies", "chocolate", "dark chocolate", "milk chocolate", "white chocolate", "semi sweet", "bittersweet", "unsweetened", "cocoa powder", "chocolate chips", "chocolate chunks", "chocolate bars", "candy bars", "snickers", "kit kat", "twix", "milky way", "3 musketeers", "butterfinger", "crunch", "hersheys", "reeses", "m&ms", "skittles", "starburst", "jolly ranchers", "life savers", "tic tacs", "breath mints", "gum", "chewing gum", "bubble gum", "gummy bears", "gummy worms", "fruit snacks", "fruit leather", "fruit roll ups", "dried fruit", "raisins", "dates", "figs", "apricots", "banana chips", "apple chips", "coconut flakes", "nuts", "peanuts", "almonds", "walnuts", "pecans", "cashews", "pistachios", "macadamia", "brazil nuts", "hazelnuts", "pine nuts", "mixed nuts", "trail mix", "granola bars", "energy bars", "protein bars", "cereal bars", "fruit bars", "nut bars", "seed bars", "power bars", "cliff bars", "kind bars", "larabars", "rx bars", "quest bars", "beef jerky", "turkey jerky", "salmon jerky", "pork rinds", "corn nuts", "sunflower seeds", "pumpkin seeds", "sesame sticks", "wasabi peas", "edamame", "seaweed snacks", "rice crackers", "mochi", "pocky", "ramune", "kit kat", "hi chew", "chocolate covered", "yogurt covered", "caramel corn", "kettle corn", "cheese popcorn", "caramel popcorn", "chocolate popcorn", "microwave popcorn", "air popped"] },
-    { category: "Frozen Food", keywords: ["frozen", "ice cream", "pizza", "nuggets", "fries", "frozen vegetables", "frozen fruit", "frozen berries", "frozen corn", "frozen peas", "frozen carrots", "frozen broccoli", "frozen cauliflower", "frozen spinach", "frozen green beans", "frozen lima beans", "frozen edamame", "frozen okra", "frozen artichoke", "frozen asparagus", "frozen Brussels sprouts", "frozen squash", "frozen zucchini", "frozen onions", "frozen peppers", "frozen stir fry", "frozen medley", "frozen blend", "frozen mango", "frozen pineapple", "frozen strawberries", "frozen blueberries", "frozen raspberries", "frozen blackberries", "frozen cherries", "frozen peaches", "frozen mixed berries", "smoothie packs", "acai", "frozen meals", "tv dinners", "lean cuisine", "healthy choice", "stouffers", "marie callenders", "banquet", "swanson", "hungry man", "smart ones", "weight watchers", "frozen entrees", "frozen breakfast", "frozen burritos", "frozen sandwiches", "frozen wraps", "hot pockets", "bagel bites", "pizza rolls", "corn dogs", "frozen fish", "fish sticks", "fish fillets", "frozen shrimp", "frozen scallops", "frozen crab", "frozen lobster", "frozen chicken", "chicken tenders", "chicken wings", "chicken patties", "frozen beef", "frozen pork", "frozen turkey", "frozen sausage", "frozen bacon", "frozen hash browns", "frozen tater tots", "frozen onion rings", "frozen mozzarella sticks", "frozen jalapeño poppers", "frozen appetizers", "frozen desserts", "ice cream", "gelato", "sorbet", "sherbet", "frozen yogurt", "popsicles", "ice cream bars", "ice cream sandwiches", "ice cream cones", "frozen pies", "frozen cakes", "frozen cookies", "frozen dough", "cookie dough", "pie crust", "pizza dough", "bread dough", "dinner rolls", "croissants", "puff pastry", "phyllo", "waffles", "pancakes", "french toast", "frozen juice", "concentrate", "lemonade", "orange juice", "apple juice", "cranberry juice", "grape juice"] },
-    { category: "Baking Supplies", keywords: ["flour", "maida", "sugar", "salt", "baking powder", "yeast", "vanilla", "all purpose flour", "bread flour", "cake flour", "pastry flour", "self rising flour", "whole wheat flour", "almond flour", "coconut flour", "rice flour", "corn starch", "potato starch", "tapioca starch", "arrowroot", "white sugar", "brown sugar", "powdered sugar", "confectioners sugar", "raw sugar", "turbinado", "demerara", "muscovado", "coconut sugar", "palm sugar", "maple sugar", "stevia", "erythritol", "xylitol", "monk fruit", "artificial sweetener", "splenda", "equal", "sweet n low", "table salt", "sea salt", "kosher salt", "himalayan salt", "celtic salt", "fleur de sel", "smoked salt", "garlic salt", "onion salt", "celery salt", "seasoned salt", "baking soda", "baking powder", "cream of tartar", "active dry yeast", "instant yeast", "bread machine yeast", "fresh yeast", "nutritional yeast", "vanilla extract", "almond extract", "lemon extract", "orange extract", "rum extract", "coconut extract", "mint extract", "banana extract", "maple extract", "vanilla beans", "vanilla paste", "food coloring", "gel food coloring", "natural food coloring", "sprinkles", "nonpareils", "jimmies", "sanding sugar", "pearl dust", "edible glitter", "chocolate chips", "mini chocolate chips", "white chocolate chips", "butterscotch chips", "peanut butter chips", "cinnamon chips", "caramel chips", "toffee bits", "heath bits", "mini marshmallows", "marshmallows", "fluff", "coconut flakes", "shredded coconut", "desiccated coconut", "coconut cream", "heavy cream", "whipping cream", "sour cream", "cream cheese", "butter", "margarine", "shortening", "lard", "coconut oil", "vegetable oil", "canola oil", "corn syrup", "honey", "maple syrup", "molasses", "agave", "brown rice syrup", "barley malt", "malt extract", "cocoa powder", "dutch process", "unsweetened chocolate", "bittersweet chocolate", "semi sweet chocolate", "milk chocolate", "white chocolate", "chocolate bars", "melting chocolate", "candy melts", "almond paste", "marzipan", "tahini", "peanut butter", "almond butter", "cashew butter", "sunflower butter", "nuts", "almonds", "walnuts", "pecans", "hazelnuts", "pine nuts", "macadamia", "pistachios", "dried fruit", "raisins", "cranberries", "cherries", "blueberries", "apricots", "dates", "figs", "candied fruit", "citrus peel", "lemon zest", "orange zest", "lime zest", "orange blossom water", "rose water", "rum", "brandy", "bourbon", "amaretto", "kahlua", "grand marnier", "cointreau", "kirsch", "port", "sherry", "marsala", "cooking wine", "baking pans", "cake pans", "muffin tins", "loaf pans", "cookie sheets", "baking sheets", "silicone mats", "parchment paper", "wax paper", "aluminum foil", "plastic wrap", "measuring cups", "measuring spoons", "kitchen scale", "mixing bowls", "stand mixer", "hand mixer", "whisk", "spatula", "wooden spoon", "rolling pin", "pastry brush", "piping bags", "piping tips", "cake decorating", "fondant", "gum paste", "modeling chocolate", "royal icing", "buttercream", "ganache", "glaze", "frosting", "icing", "cake mix", "brownie mix", "cookie mix", "muffin mix", "pancake mix", "bread mix", "pizza dough mix", "biscuit mix", "cornbread mix", "pie filling", "pudding mix", "jello", "gelatin", "agar", "pectin", "rennet", "citric acid", "tartaric acid", "ascorbic acid", "calcium chloride", "sodium alginate", "xanthan gum", "guar gum", "locust bean gum", "carrageenan", "methylcellulose"] },
-    { category: "Drinks & Beverages", keywords: ["water", "juice", "soda", "beer", "wine", "soft drink", "bottled water", "sparkling water", "mineral water", "spring water", "distilled water", "alkaline water", "coconut water", "flavored water", "vitamin water", "sports drink", "energy drink", "electrolyte drink", "gatorade", "powerade", "red bull", "monster", "rockstar", "5 hour energy", "protein shake", "smoothie", "juice", "orange juice", "apple juice", "cranberry juice", "grape juice", "pineapple juice", "grapefruit juice", "tomato juice", "vegetable juice", "v8", "carrot juice", "beet juice", "celery juice", "kale juice", "wheatgrass", "kombucha", "kefir", "probiotic drink", "aloe vera", "lemon juice", "lime juice", "lemonade", "limeade", "fruit punch", "hawaiian punch", "kool aid", "tang", "crystal light", "mio", "liquid enhancer", "soda", "cola", "pepsi", "coca cola", "dr pepper", "sprite", "7up", "mountain dew", "root beer", "ginger ale", "club soda", "tonic water", "bitter lemon", "ginger beer", "cream soda", "orange soda", "grape soda", "strawberry soda", "cherry soda", "diet soda", "zero sugar", "caffeine free", "decaf", "sugar free", "low calorie", "sparkling juice", "sparkling cider", "champagne", "prosecco", "cava", "wine", "red wine", "white wine", "rose", "dessert wine", "fortified wine", "port", "sherry", "madeira", "marsala", "vermouth", "sake", "plum wine", "rice wine", "mead", "beer", "lager", "ale", "stout", "porter", "ipa", "wheat beer", "pilsner", "amber", "brown ale", "blonde ale", "light beer", "non alcoholic beer", "hard seltzer", "hard cider", "hard lemonade", "wine cooler", "sangria", "margarita", "daiquiri", "pina colada", "mudslide", "bloody mary", "mimosa", "bellini", "cosmopolitan", "mojito", "caipirinha", "liqueur", "vodka", "gin", "rum", "whiskey", "bourbon", "scotch", "brandy", "cognac", "tequila", "mezcal", "absinthe", "sambuca", "ouzo", "grappa", "schnapps", "cordial", "amaretto", "kahlua", "baileys", "grand marnier", "cointreau", "triple sec", "blue curacao", "grenadine", "simple syrup", "bitters", "angostura", "cocktail mix", "bloody mary mix", "margarita mix", "sour mix", "sweet and sour", "grenadine", "maraschino", "olives", "cocktail onions", "lime wedges", "lemon wedges", "orange slices", "cherries", "cocktail umbrellas", "swizzle sticks", "ice", "crushed ice", "ice cubes", "dry ice"] },
-    { category: "Cleaning & Household", keywords: ["detergent", "soap", "cleaner", "paper towel", "toilet paper", "trash bag", "laundry detergent", "fabric softener", "bleach", "stain remover", "dish soap", "dishwasher detergent", "rinse aid", "all purpose cleaner", "glass cleaner", "bathroom cleaner", "toilet bowl cleaner", "tub and tile cleaner", "shower cleaner", "mildew remover", "disinfectant", "antibacterial", "sanitizer", "hand sanitizer", "floor cleaner", "wood cleaner", "furniture polish", "dusting spray", "carpet cleaner", "upholstery cleaner", "oven cleaner", "degreaser", "granite cleaner", "stainless steel cleaner", "window cleaner", "mirror cleaner", "scrubbing bubbles", "ajax", "comet", "soft scrub", "bar keepers friend", "clr", "lime away", "drano", "liquid plumber", "toilet paper", "bath tissue", "facial tissue", "kleenex", "paper towels", "paper napkins", "paper plates", "paper cups", "disposable utensils", "aluminum foil", "plastic wrap", "wax paper", "parchment paper", "freezer bags", "storage bags", "sandwich bags", "snack bags", "gallon bags", "quart bags", "trash bags", "garbage bags", "recycling bags", "compost bags", "yard waste bags", "lawn and leaf bags", "contractor bags", "kitchen bags", "tall kitchen bags", "drawstring bags", "scented bags", "odor control", "febreze", "air freshener", "plug in air freshener", "candles", "scented candles", "reed diffuser", "potpourri", "baking soda", "vinegar", "hydrogen peroxide", "rubbing alcohol", "ammonia", "borax", "washing soda", "oxiclean", "tide", "gain", "arm and hammer", "persil", "all", "cheer", "era", "xtra", "sun", "purex", "downy", "bounce", "snuggle", "dryer sheets", "wool dryer balls", "starch", "sizing", "ironing spray", "wrinkle releaser", "static guard", "spot remover", "carpet spot cleaner", "pet stain remover", "enzyme cleaner", "odor eliminator", "mothballs", "cedar blocks", "lavender sachets", "closet freshener", "shoe deodorizer", "refrigerator deodorizer", "garbage disposal cleaner", "drain cleaner", "septic treatment", "rust remover", "calcium lime rust", "mold and mildew remover", "grout cleaner", "tile cleaner", "deck cleaner", "concrete cleaner", "pressure washer detergent", "car wash", "wheel cleaner", "tire shine", "glass rain repellent", "windshield washer fluid", "antifreeze", "motor oil", "transmission fluid", "brake fluid", "power steering fluid", "coolant", "radiator flush", "fuel additive", "carburetor cleaner", "brake cleaner", "contact cleaner", "electrical cleaner", "wd40", "penetrating oil", "chain lube", "white lithium grease", "silicone spray", "rust preventative", "primer", "paint", "spray paint", "wood stain", "polyurethane", "varnish", "lacquer", "enamel", "latex paint", "oil based paint", "acrylic paint", "chalk paint", "milk paint", "limewash", "whitewash", "paint thinner", "turpentine", "mineral spirits", "denatured alcohol", "acetone", "methyl ethyl ketone", "xylene", "toluene", "paint stripper", "wood filler", "spackle", "joint compound", "drywall compound", "caulk", "silicone sealant", "weatherstrip", "foam sealant", "expanding foam", "spray foam", "adhesive", "glue", "super glue", "epoxy", "wood glue", "contact cement", "construction adhesive", "duct tape", "electrical tape", "masking tape", "painters tape", "packing tape", "double sided tape", "velcro", "zip ties", "cable ties", "bungee cords", "rope", "twine", "chain", "wire", "extension cord", "power strip", "surge protector", "light bulbs", "led bulbs", "cfl bulbs", "halogen bulbs", "incandescent bulbs", "fluorescent tubes", "batteries", "aa batteries", "aaa batteries", "9 volt batteries", "c batteries", "d batteries", "button batteries", "lithium batteries", "rechargeable batteries", "battery charger", "flashlight", "lantern", "candles", "lighter", "matches", "fire starter", "charcoal", "propane", "butane", "camping fuel", "white gas", "kerosene", "lamp oil", "citronella", "bug spray", "insect repellent", "mosquito repellent", "fly spray", "ant killer", "roach killer", "spider killer", "wasp spray", "bee spray", "flea spray", "tick spray", "moth killer", "silverfish killer", "carpet beetle killer", "pantry pest killer", "rodent bait", "mouse trap", "rat trap", "humane trap", "live trap", "glue trap", "snap trap", "bait station", "poison bait", "pest control", "termite treatment", "bed bug spray", "dust mite spray", "lice treatment", "flea treatment", "tick treatment"] },
-    { category: "Personal Care", keywords: ["shampoo", "toothpaste", "deodorant", "lotion", "razor", "conditioner", "body wash", "soap", "face wash", "moisturizer", "sunscreen", "toothbrush", "mouthwash", "floss", "dental floss", "dental picks", "whitening strips", "denture cleaner", "denture adhesive", "oral gel", "teething gel", "lip balm", "chapstick", "lip gloss", "lipstick", "foundation", "concealer", "powder", "blush", "bronzer", "highlighter", "eyeshadow", "eyeliner", "mascara", "eyebrow pencil", "makeup remover", "cleansing wipes", "face mask", "scrub", "exfoliator", "toner", "serum", "essence", "ampoule", "eye cream", "night cream", "day cream", "anti aging", "retinol", "vitamin c", "hyaluronic acid", "niacinamide", "salicylic acid", "glycolic acid", "lactic acid", "benzoyl peroxide", "acne treatment", "spot treatment", "pimple patches", "blackhead strips", "pore strips", "cleansing strips", "nose strips", "under eye patches", "sheet mask", "clay mask", "peel off mask", "sleeping mask", "hydrogel mask", "collagen mask", "charcoal mask", "mud mask", "gold mask", "snail mask", "aloe mask", "cucumber mask", "honey mask", "oatmeal mask", "avocado mask", "green tea mask", "rose mask", "lavender mask", "chamomile mask", "witch hazel", "rose water", "micellar water", "makeup wipes", "cotton pads", "cotton swabs", "q tips", "bobby pins", "hair ties", "scrunchies", "headbands", "hair clips", "barrettes", "hair accessories", "hair brush", "comb", "detangling brush", "round brush", "paddle brush", "boar bristle brush", "wet brush", "wide tooth comb", "rat tail comb", "teasing comb", "hair pick", "hair dryer", "blow dryer", "curling iron", "flat iron", "hair straightener", "hot rollers", "hair crimper", "hair waver", "hair styling tools", "hair gel", "hair wax", "hair paste", "hair clay", "hair pomade", "hair spray", "hair mousse", "hair foam", "hair serum", "hair oil", "argan oil", "coconut oil", "jojoba oil", "castor oil", "rosemary oil", "tea tree oil", "peppermint oil", "lavender oil", "eucalyptus oil", "essential oils", "hair mask", "hair treatment", "leave in conditioner", "hair protectant", "heat protectant", "dry shampoo", "hair color", "hair dye", "semi permanent", "permanent", "temporary", "wash out", "highlights", "lowlights", "root touch up", "gray coverage", "blonde", "brunette", "black", "red", "auburn", "chestnut", "copper", "platinum", "ash", "honey", "caramel", "chocolate", "mahogany", "burgundy", "plum", "purple", "blue", "green", "pink", "rainbow", "ombre", "balayage", "frosting", "streaking", "bleach", "developer", "toner", "color remover", "nail polish", "nail lacquer", "gel polish", "base coat", "top coat", "nail strengthener", "nail hardener", "cuticle oil", "cuticle cream", "hand cream", "nail file", "emery board", "buffer", "pumice stone", "nail clippers", "cuticle nippers", "nail scissors", "tweezers", "eyelash curler", "brow brush", "spoolie", "makeup brushes", "foundation brush", "concealer brush", "powder brush", "blush brush", "contour brush", "highlight brush", "eyeshadow brush", "blending brush", "liner brush", "lip brush", "fan brush", "stippling brush", "kabuki brush", "beauty blender", "makeup sponge", "wedge sponge", "silisponge", "konjac sponge", "loofa", "body scrub", "sugar scrub", "salt scrub", "coffee scrub", "dry brush", "back scrubber", "shower gel", "bubble bath", "bath salts", "bath bombs", "bath oil", "bath milk", "body butter", "body cream", "hand lotion", "foot cream", "heel balm", "callus remover", "corn remover", "blister pads", "moleskin", "athletic tape", "kinesiology tape", "first aid tape", "bandages", "band aids", "gauze", "medical tape", "antiseptic", "hydrogen peroxide", "neosporin", "bacitracin", "antibiotic ointment", "hydrocortisone", "calamine lotion", "aloe vera gel", "burn gel", "pain relief gel", "muscle rub", "bengay", "icy hot", "aspercreme", "tiger balm", "menthol", "camphor", "arnica", "cbd cream", "cbd oil", "hemp oil", "massage oil", "baby oil", "mineral oil", "petroleum jelly", "vaseline", "aquaphor", "lanolin", "shea butter", "cocoa butter", "mango butter", "coconut butter", "body oil", "perfume", "cologne", "body spray", "body mist", "aftershave", "pre shave oil", "shaving cream", "shaving gel", "shaving foam", "disposable razors", "cartridge razors", "safety razors", "straight razors", "electric razors", "electric shavers", "beard trimmer", "nose hair trimmer", "body groomer", "bikini trimmer", "eyebrow trimmer", "precision trimmer", "replacement blades", "razor blades", "shaving brush", "shaving bowl", "shaving stand", "alum block", "styptic pencil", "aftershave balm", "beard oil", "beard balm", "beard wax", "mustache wax", "feminine hygiene", "tampons", "pads", "panty liners", "menstrual cups", "feminine wipes", "douche", "yeast infection treatment", "uti treatment", "pregnancy tests", "ovulation tests", "condoms", "lubricant", "personal lubricant", "ky jelly", "adult diapers", "incontinence pads", "bladder control", "depends", "poise", "reading glasses", "sunglasses", "contact lens solution", "contact lens case", "eye drops", "artificial tears", "allergy eye drops", "pink eye drops", "stye treatment", "ear drops", "ear wax removal", "hearing aid batteries", "nasal spray", "saline spray", "neti pot", "nasal strips", "breathe right", "cold sore treatment", "fever blister", "abreva", "carmex", "blistex", "medicated lip balm", "hemorrhoid treatment", "preparation h", "tucks", "witch hazel pads", "stool softener", "fiber supplement", "laxative", "anti diarrheal", "pepto bismol", "imodium", "gas relief", "simethicone", "beano", "lactaid", "digestive enzymes", "probiotics", "prebiotics", "antacid", "tums", "rolaids", "pepcid", "zantac", "prilosec", "nexium", "omeprazole", "lansoprazole", "esomeprazole", "famotidine", "ranitidine", "cimetidine", "calcium carbonate", "magnesium hydroxide", "aluminum hydroxide", "sodium bicarbonate", "alka seltzer", "pain reliever", "acetaminophen", "tylenol", "ibuprofen", "advil", "motrin", "naproxen", "aleve", "aspirin", "bayer", "excedrin", "migraine relief", "headache relief", "sinus relief", "allergy relief", "antihistamine", "benadryl", "claritin", "zyrtec", "allegra", "sudafed", "mucinex", "robitussin", "delsym", "cough drops", "throat lozenges", "halls", "ricola", "chloraseptic", "throat spray", "cough syrup", "expectorant", "decongestant", "nasal decongestant", "chest rub", "vicks", "mentholatum", "cold and flu", "dayquil", "nyquil", "theraflu", "emergen c", "airborne", "zinc", "vitamin c", "echinacea", "elderberry", "oscillococcinum", "homeopathic", "natural remedies", "herbal supplements", "vitamins", "multivitamin", "vitamin d", "vitamin b", "vitamin e", "vitamin a", "vitamin k", "folic acid", "biotin", "niacin", "riboflavin", "thiamine", "pantothenic acid", "pyridoxine", "cobalamin", "ascorbic acid", "tocopherol", "retinol", "beta carotene", "lutein", "zeaxanthin", "lycopene", "resveratrol", "quercetin", "curcumin", "turmeric", "ginger", "garlic", "ginseng", "ginkgo", "st johns wort", "valerian", "melatonin", "5 htp", "sam e", "coq10", "alpha lipoic acid", "acetyl l carnitine", "l carnitine", "creatine", "bcaa", "protein powder", "whey protein", "casein protein", "plant protein", "pea protein", "hemp protein", "rice protein", "soy protein", "collagen", "gelatin", "glucosamine", "chondroitin", "msm", "hyaluronic acid", "omega 3", "fish oil", "krill oil", "flax oil", "chia oil", "evening primrose oil", "borage oil", "black currant oil", "coconut oil", "mct oil", "hemp oil", "cbd oil", "magnesium", "calcium", "iron", "zinc", "selenium", "chromium", "copper", "manganese", "molybdenum", "iodine", "potassium", "phosphorus", "chloride", "sodium", "electrolytes", "sports nutrition", "pre workout", "post workout", "energy drinks", "protein bars", "energy bars", "meal replacement"] },
-    { category: "Baby Products", keywords: ["baby", "diaper", "formula", "baby food", "diapers", "pull ups", "training pants", "baby wipes", "diaper rash cream", "diaper cream", "zinc oxide", "desitin", "boudreaux", "a&d ointment", "baby powder", "cornstarch", "talc free", "baby oil", "baby lotion", "baby shampoo", "baby soap", "baby wash", "baby bubble bath", "no tears", "johnson's", "aveeno", "cetaphil", "mustela", "babyganics", "honest company", "seventh generation", "pampers", "huggies", "honest", "bambo", "earth's best", "hello bello", "infant formula", "baby formula", "newborn formula", "toddler formula", "organic formula", "non gmo formula", "soy formula", "lactose free formula", "hypoallergenic formula", "sensitive formula", "gentle formula", "similac", "enfamil", "gerber", "earth's best formula", "baby's only", "holle", "hipp", "kendamil", "bobbie", "by heart", "baby food", "baby cereal", "rice cereal", "oatmeal cereal", "barley cereal", "mixed cereal", "baby puree", "stage 1", "stage 2", "stage 3", "stage 4", "first foods", "finger foods", "puffs", "baby snacks", "teething biscuits", "teething wafers", "baby crackers", "baby yogurt", "baby cheese", "baby meat", "baby vegetables", "baby fruits", "organic baby food", "non gmo baby food", "pouches", "jars", "containers", "beech nut", "happy baby", "plum organics", "once upon a farm", "little spoon", "white leaf provisions", "cerebelly", "amara", "serenity kids", "tiny organics", "bottles", "baby bottles", "sippy cups", "training cups", "straw cups", "360 cups", "munchkin", "tommee tippee", "philips avent", "dr brown", "mam", "playtex", "born free", "comotomo", "nanobebe", "medela", "spectra", "lansinoh", "motif", "evenflo", "chicco", "bottle nipples", "bottle caps", "bottle rings", "bottle brushes", "bottle sterilizer", "bottle warmer", "formula dispenser", "formula mixer", "pacifiers", "binkies", "soothies", "orthodontic", "silicone", "latex", "newborn pacifier", "0-6 months", "6-18 months", "18+ months", "pacifier clips", "pacifier case", "pacifier wipes", "teethers", "teething toys", "teething rings", "frozen teethers", "vibrating teethers", "silicone teethers", "wood teethers", "sophie the giraffe", "nuby", "manhattan toy", "infantino", "orajel", "baby orajel", "teething gel", "teething tablets", "camilia", "hyland's", "boiron", "baby tylenol", "infant tylenol", "baby motrin", "infant motrin", "baby medicine", "infant medicine", "medicine dropper", "medicine spoon", "pacifier medicine dispenser", "thermometer", "digital thermometer", "forehead thermometer", "ear thermometer", "rectal thermometer", "temporal thermometer", "braun", "vicks", "exergen", "fridababy", "nose frida", "nasal aspirator", "bulb syringe", "saline drops", "baby humidifier", "cool mist humidifier", "vaporizer", "diffuser", "essential oils for babies", "lavender", "chamomile", "eucalyptus", "baby monitor", "video monitor", "audio monitor", "wifi monitor", "smartphone monitor", "infant optics", "motorola", "vtech", "nanit", "owlet", "angelcare", "baby camera", "night light", "sound machine", "white noise", "lullabies", "nature sounds", "heartbeat sounds", "womb sounds", "sleep training", "sleep consultant", "swaddle", "sleep sack", "wearable blanket", "transition swaddle", "arms up swaddle", "love to dream", "halo", "nested bean", "zipadee zip", "merlin's magic sleepsuit", "baby blanket", "receiving blanket", "muslin blanket", "knit blanket", "fleece blanket", "security blanket", "lovey", "stuffed animal", "plush toy", "baby toy", "rattle", "soft toy", "sensory toy", "black and white toy", "high contrast", "mobile", "crib mobile", "play gym", "activity mat", "tummy time mat", "play mat", "bouncer", "swing", "rocker", "glider", "baby carrier", "wrap", "sling", "structured carrier", "ergobaby", "baby bjorn", "lillebaby", "tula", "infantino carrier", "moby wrap", "solly wrap", "boba wrap", "konny", "happy baby carrier", "stroller", "infant car seat", "convertible car seat", "booster seat", "high chair", "booster chair", "travel high chair", "hook on chair", "bumbo", "ingenuity", "fisher price", "graco", "chicco car seat", "britax", "maxi cosi", "nuna", "uppababy", "cybex", "clek", "diono", "safety 1st", "evenflo car seat", "cosco", "baby gates", "safety gates", "pressure mount", "hardware mount", "extra wide", "extra tall", "walk through", "auto close", "magnetic latch", "regalo", "summer infant", "cardinal gates", "munchkin gate", "north states", "outlet covers", "outlet plugs", "cabinet locks", "drawer locks", "cabinet latches", "magnetic locks", "adhesive locks", "strap locks", "toilet locks", "appliance locks", "oven locks", "refrigerator locks", "door knob covers", "door locks", "lever locks", "sliding door locks", "corner guards", "edge guards", "table corner protectors", "furniture anchors", "anti tip straps", "tv straps", "dresser anchors", "bookshelf anchors", "window guards", "window stops", "cord covers", "cord shorteners", "blind cord cleats", "bathtub spout covers", "faucet covers", "bathtub mats", "non slip mats", "bath seats", "bath rings", "bath supports", "hooded towels", "washcloths", "bath toys", "rubber ducky", "bath books", "floating toys", "squirt toys", "bath crayons", "baby shampoo rinse cup", "tear free shampoo", "baby bathtub", "infant tub", "collapsible tub", "bath support", "sling", "mesh sling", "newborn insert", "thermometer bath", "bath water thermometer", "changing pad", "changing table", "changing pad cover", "waterproof pad", "disposable changing pads", "travel changing pad", "portable changing station", "diaper bag", "backpack diaper bag", "tote diaper bag", "messenger diaper bag", "rolling diaper bag", "insulated bottle pockets", "changing pad included", "stroller clips", "wet bag", "dry bag", "laundry bag", "mesh bag", "toy storage", "toy box", "toy chest", "storage bins", "fabric bins", "collapsible storage", "under crib storage", "closet organizer", "shoe organizer", "nursery decor", "wall decals", "growth chart", "name letters", "night light projector", "ceiling projector", "star projector", "galaxy projector", "music box", "crib sheets", "fitted sheets", "flat sheets", "crib mattress", "organic mattress", "waterproof mattress", "mattress protector", "mattress pad", "crib bumper", "breathable bumper", "mesh bumper", "crib skirt", "dust ruffle", "window treatments", "blackout curtains", "room darkening", "cordless blinds", "cellular shades", "valances", "tie backs", "curtain rods", "nursery chair", "glider chair", "rocking chair", "ottoman", "nursing pillow", "boppy", "my brest friend", "breast pump", "electric pump", "manual pump", "hospital grade", "double electric", "single electric", "hands free", "wearable pump", "portable pump", "travel pump", "pump parts", "flanges", "valves", "membranes", "tubing", "bottles for pumping", "storage bags", "milk storage", "freezer bags", "ice packs", "cooler bag", "pump bag", "pumping bra", "nursing bra", "sleep bra", "sports nursing bra", "wireless nursing bra", "nursing tank", "nursing tops", "nursing dress", "nursing cover", "breastfeeding cover", "privacy cover", "apron style", "infinity scarf", "poncho style", "nursing pads", "disposable pads", "reusable pads", "bamboo pads", "washable pads", "lanolin", "nipple cream", "nipple butter", "nursing tea", "lactation tea", "mothers milk tea", "fenugreek", "blessed thistle", "red raspberry leaf", "lactation cookies", "lactation bars", "brewers yeast", "lecithin", "moringa", "fennel", "dill", "galactagogues", "milk supply", "domperidone", "reglan", "motilium", "prenatal vitamins", "postnatal vitamins", "dha", "folate", "iron", "calcium", "vitamin d", "omega 3"] },
-    { category: "Pet Products", keywords: ["pet food", "dog food", "cat food", "pet", "puppy food", "kitten food", "senior dog food", "senior cat food", "small breed", "large breed", "grain free", "limited ingredient", "raw food", "freeze dried", "wet food", "dry food", "canned food", "pouches", "treats", "training treats", "dental treats", "biscuits", "jerky", "rawhide", "bully sticks", "pig ears", "antlers", "bones", "chew toys", "rope toys", "squeaky toys", "balls", "frisbee", "fetch toys", "interactive toys", "puzzle toys", "cat toys", "feather toys", "laser pointer", "catnip", "cat grass", "scratching post", "cat tree", "cat tower", "litter box", "litter", "clumping litter", "non clumping", "crystal litter", "natural litter", "scented litter", "unscented litter", "litter scoop", "litter mat", "litter deodorizer", "poop bags", "waste bags", "pet waste", "pooper scooper", "leash", "collar", "harness", "id tags", "pet tags", "retractable leash", "training collar", "prong collar", "gentle leader", "head collar", "no pull harness", "car harness", "seat belt", "car seat", "pet carrier", "crate", "kennel", "travel carrier", "airline approved", "soft carrier", "hard carrier", "rolling carrier", "backpack carrier", "pet stroller", "pet bed", "dog bed", "cat bed", "orthopedic bed", "heated bed", "cooling bed", "waterproof bed", "washable bed", "blanket", "pet blanket", "heated pad", "cooling mat", "grooming", "brush", "comb", "slicker brush", "pin brush", "undercoat rake", "shedding blade", "nail clippers", "nail grinder", "nail file", "styptic powder", "ear cleaner", "ear wipes", "dental care", "toothbrush", "toothpaste", "dental spray", "dental wipes", "water additive", "breath freshener", "shampoo", "conditioner", "dry shampoo", "flea shampoo", "medicated shampoo", "whitening shampoo", "deodorizing shampoo", "tearless shampoo", "oatmeal shampoo", "hypoallergenic", "sensitive skin", "flea treatment", "flea prevention", "tick prevention", "flea collar", "flea spray", "flea powder", "spot on treatment", "oral flea treatment", "heartworm prevention", "dewormer", "vitamins", "supplements", "joint supplements", "hip and joint", "glucosamine", "fish oil", "probiotics", "digestive enzymes", "calming supplements", "anxiety relief", "pheromones", "thundershirt", "first aid", "wound care", "antiseptic", "bandages", "thermometer", "medicine", "pain relief", "antibiotics", "eye drops", "ear drops", "hot spot treatment", "allergy relief", "skin treatment", "medicated spray", "bitter apple", "training spray", "house training", "pee pads", "training pads", "artificial grass", "pet gate", "baby gate", "exercise pen", "playpen", "fence", "invisible fence", "wireless fence", "tie out", "stake", "chain", "cable", "food bowl", "water bowl", "elevated feeder", "slow feeder", "puzzle feeder", "automatic feeder", "gravity feeder", "water fountain", "pet fountain", "circulating water", "filter", "replacement filter", "food storage", "airtight container", "scoop", "mat", "placemat", "splash mat", "non slip", "stainless steel", "ceramic", "plastic", "silicone", "bamboo", "melamine", "travel bowl", "collapsible bowl", "portable", "camping", "hiking", "backpacking", "life jacket", "flotation device", "swimming", "pool", "beach", "boots", "paw protection", "snow boots", "rain boots", "socks", "coat", "sweater", "jacket", "raincoat", "life vest", "costume", "halloween", "christmas", "birthday", "bandana", "bow tie", "dress", "shirt", "hoodie", "pajamas", "recovery suit", "cone", "e collar", "elizabethan collar", "protective collar", "inflatable collar", "soft cone", "donut collar", "recovery cone", "surgery recovery", "spay neuter", "microchip", "pet insurance", "vet visit", "vaccination", "annual exam", "checkup", "dental cleaning", "spay", "neuter", "emergency vet", "animal hospital", "veterinarian", "pet sitting", "dog walking", "boarding", "daycare", "training", "obedience training", "puppy training", "behavior training", "agility", "competition", "show", "breeding", "pregnant", "whelping", "puppy supplies", "kitten supplies", "small animal", "rabbit food", "guinea pig food", "hamster food", "bird food", "fish food", "reptile food", "aquarium", "fish tank", "filter", "heater", "air pump", "gravel", "decorations", "plants", "artificial plants", "live plants", "driftwood", "rocks", "cave", "castle", "ship", "treasure chest", "bubbler", "air stone", "tubing", "fish net", "algae scraper", "water conditioner", "ph strips", "test kit", "aquarium salt", "medication", "ich treatment", "fungus treatment", "bacteria treatment", "turtle", "lizard", "snake", "gecko", "bearded dragon", "iguana", "chameleon", "frog", "toad", "salamander", "hermit crab", "tarantula", "scorpion", "heat lamp", "uvb light", "ceramic heater", "under tank heater", "thermostat", "thermometer", "hygrometer", "substrate", "bedding", "sand", "bark", "moss", "coconut fiber", "paper towel", "newspaper", "aspen", "pine", "cedar", "cypress", "reptile carpet", "hide", "cave", "log", "branch", "vine", "fake plant", "water dish", "food dish", "calcium", "vitamin d3", "multivitamin", "bird", "parakeet", "budgie", "cockatiel", "lovebird", "finch", "canary", "conure", "parrot", "macaw", "cockatoo", "african grey", "amazon", "caique", "quaker", "sun conure", "green cheek", "blue and gold", "scarlet macaw", "cage", "flight cage", "breeding cage", "travel cage", "play gym", "perch", "natural perch", "rope perch", "mineral perch", "swing", "ladder", "mirror", "bell", "foraging toy", "puzzle toy", "shredding toy", "foot toy", "millet", "spray millet", "seed", "pellets", "fruit", "vegetables", "egg food", "hand feeding formula", "weaning food", "breeding food", "cuttlebone", "mineral block", "grit", "charcoal", "probiotics", "enzymes", "vitamins", "supplements", "nesting box", "nesting material", "coconut fiber", "shredded paper", "cotton", "sisal", "jute", "cage cover", "night cover", "seed guard", "splash guard", "cage liner", "newspaper", "corn cob", "walnut shell", "paper", "small pet", "rabbit", "guinea pig", "hamster", "gerbil", "rat", "mouse", "chinchilla", "ferret", "hedgehog", "sugar glider", "prairie dog", "degu", "cage", "hutch", "pen", "playpen", "run", "exercise wheel", "silent wheel", "comfort wheel", "saucer wheel", "hide house", "igloos", "tunnel", "tube", "hay", "timothy hay", "alfalfa hay", "orchard grass", "meadow hay", "botanical hay", "pellets", "nuggets", "muesli", "treats", "yogurt drops", "honey sticks", "fruit treats", "vegetable treats", "chew sticks", "wood chews", "apple sticks", "willow", "pumice", "lava ledge", "mineral chew", "salt lick", "water bottle", "sipper bottle", "crock", "food dish", "hay rack", "hay feeder", "bedding", "paper bedding", "aspen shavings", "pine shavings", "cedar shavings", "corn cob bedding", "recycled paper", "hemp bedding", "wood pellets", "straw", "fleece", "cage liner", "litter", "litter box", "corner litter box", "triangular", "rectangular", "high back", "low entry", "covered", "open", "sifting", "self cleaning", "automatic", "electronic", "carbon filter", "odor control", "deodorizer", "cleaning supplies", "cage cleaner", "disinfectant", "pet safe cleaner", "enzymatic cleaner", "urine destroyer", "stain remover", "odor eliminator", "grooming supplies", "nail trimmers", "nail clippers", "nail file", "brush", "comb", "slicker brush", "deshedding tool", "furminator", "shedding blade", "grooming glove", "bathing", "shampoo", "no rinse shampoo", "dry shampoo", "conditioner", "detangling spray", "ear cleaner", "eye wipes", "dental care", "toothbrush", "finger brush", "dental spray", "dental gel", "water additive", "breath spray", "dental chews", "rawhide", "greenies", "dentastix", "nylabone", "kong", "benebone", "antler", "himalayan chew", "yak chew", "collagen chew", "fish skin", "pig ear", "cow ear", "lamb ear", "duck feet", "chicken feet", "turkey neck", "beef trachea", "esophagus", "bladder stick", "pizzle", "liver treats", "lung treats", "heart treats", "kidney treats", "training treats", "freeze dried", "dehydrated", "air dried", "single ingredient", "limited ingredient", "grain free", "gluten free", "natural", "organic", "human grade", "raw", "frozen raw", "freeze dried raw", "air dried raw", "dehydrated raw", "raw patties", "raw nuggets", "raw tubes", "raw bones", "recreational bones", "marrow bones", "knuckle bones", "femur bones", "rib bones", "neck bones", "oxtail", "pig tail", "lamb shank", "venison", "elk", "bison", "duck", "goose", "quail", "pheasant", "rabbit", "kangaroo", "ostrich", "emu", "fish", "salmon", "herring", "sardine", "mackerel", "cod", "pollock", "whitefish", "trout", "tuna", "mahi mahi", "novel protein", "exotic protein", "hypoallergenic", "prescription diet", "therapeutic diet", "kidney diet", "liver diet", "heart diet", "digestive diet", "weight management", "low fat", "high fiber", "diabetic", "urinary", "skin and coat", "allergy", "senior", "puppy", "kitten", "all life stages", "indoor", "outdoor", "active", "working dog", "sporting dog", "toy breed", "giant breed", "holistic", "natural", "premium", "super premium", "economy", "budget", "private label", "store brand", "veterinary", "prescription", "medicated", "therapeutic", "nutraceutical", "functional", "fortified", "enriched", "balanced", "complete", "aafco", "wsava", "fda", "usda", "organic", "non gmo", "no by products", "no fillers", "no artificial colors", "no artificial flavors", "no artificial preservatives", "no corn", "no wheat", "no soy", "no chicken", "no beef", "no dairy", "no eggs", "no fish", "no lamb", "no pork", "vegetarian", "vegan", "raw fed", "barf", "prey model", "ancestral", "evolutionary", "species appropriate", "biologically appropriate", "wild", "feral", "free range", "grass fed", "pasture raised", "wild caught", "sustainably sourced", "locally sourced", "farm fresh", "small batch", "artisan", "gourmet", "luxury", "boutique", "specialty", "imported", "domestic", "made in usa", "manufactured", "produced", "packaged", "distributed", "private label", "co packer", "contract manufacturer", "white label", "bulk", "wholesale", "retail", "online", "brick and mortar", "pet store", "farm store", "feed store", "tractor supply", "rural king", "fleet farm", "bomgaars", "orscheln", "atwoods", "coastal", "ifa", "buchheit", "murdochs", "cal ranch", "runnings", "blain supply", "mills fleet farm", "petco", "petsmart", "pet supplies plus", "petland", "pet supermarket", "hollywood feed", "pet paradise", "pet valu", "global pet foods", "ren's pets", "bosley's", "pet planet", "chico", "fressnapf", "zooplus", "bitiba", "zooroyal", "maxi zoo", "jardiland", "botanic", "truffaut", "delbard", "gamm vert", "point vert", "lisa", "welkoop", "aveve", "coop", "landi", "qualipet", "das futterhaus", "zoo zajac", "zoo & co", "futterplatz", "tiierisch", "kölle zoo", "dehner", "hornbach", "bauhaus", "obi", "toom", "hellweg", "hagebau", "raiffeisen", "baywa", "agravis", "rwe", "edeka", "rewe", "kaufland", "real", "metro", "selgros", "transgourmet", "lekkerland", "tiefenbacher", "bringmeister", "amazon fresh", "instacart", "shipt", "walmart grocery", "target shipt", "kroger delivery", "safeway delivery", "albertsons delivery", "publix delivery", "heb delivery", "meijer delivery", "costco delivery", "sams club delivery", "bjs delivery", "whole foods delivery", "fresh direct", "peapod", "fresh market", "harris teeter", "giant eagle", "stop and shop", "food lion", "piggly wiggly", "bi lo", "winn dixie", "ingles", "food city", "iga", "shurfine", "supervalu", "unfi", "kehhoe", "dot foods", "vistar", "us foods", "sysco", "gordon food service", "reinhart", "mclane", "core mark", "eby brown", "imperial", "great lakes wine", "southern glazers", "republic national", "johnson brothers", "breakthru", "wirtz beverage", "gold coast", "capitol", "ace", "young's market", "columbia", "glazer's", "ben e keith", "performance food group", "us foodservice", "sysco foodservice", "gordon food service", "reinhart foodservice", "mclane foodservice", "vistar vending", "canteen", "aramark", "sodexo", "compass group", "bon appetit", "guckenheimer", "restaurant associates", "levy restaurants", "delaware north", "centerplate", "ovations", "spectra", "aluvii", "unidine", "morrison", "ess", "flik", "eurest", "chartwells", "cafe associates", "restaurant depot", "us foods chef'store", "jetro", "costco business center", "sams club business", "bjs wholesale", "united grocery outlet", "sharp shopper", "bent n dent", "case lot", "amelia sales", "grocery outlet", "aldi", "lidl", "save a lot", "food 4 less", "foods co", "winco", "price chopper", "market basket", "shoprite", "acme", "jewel osco", "tom thumb", "randalls", "star market", "shaws", "united supermarkets", "market street", "amigos", "brookshire brothers", "super 1 foods", "spring market", "fresh by brookshires", "heritage food stores", "super mercado", "fiesta mart", "el rancho", "cardenas", "northgate market", "superior grocers", "vallarta", "mi pueblo", "ranch market", "basha's", "iga foodliner", "piggly wiggly carolina", "harris teeter", "lowes foods", "bi lo", "southeastern grocers", "winn dixie", "harveys", "fresco y mas", "lucky", "save mart", "foodmaxx", "food source", "nob hill", "raley's", "bel air", "nob hill foods", "albertsons", "vons", "pavilions", "star market", "shaws", "acme", "jewel osco", "randalls", "tom thumb", "united express", "market street", "amigos", "pak n save", "super saver", "no frills", "maxi", "provigo", "loblaws", "real canadian superstore", "no name", "presidents choice", "metro", "food basics", "freshco", "sobeys", "safeway canada", "thrifty foods", "iga canada", "foodland", "colemans", "ned's", "valufoods", "extra foods", "your independent grocer", "zehrs", "fortinos", "dominion", "atlantic superstore", "wholesale club", "superstore", "extra foods", "real canadian wholesale club", "costco canada", "walmart canada", "canadian tire", "home depot canada", "rona", "lowes canada", "home hardware", "kent", "bmr", "timber mart", "castle", "banner", "irly bird", "building box", "ucr", "federated co op", "home centre", "co op", "peavey mart", "ufa", "bmo", "rbc", "td", "scotiabank", "cibc", "national bank", "hsbc", "ing", "tangerine", "pc financial", "koodo", "fido", "virgin", "public mobile", "freedom", "telus", "bell", "rogers", "shaw", "videotron", "cogeco", "eastlink", "sasktel", "mts", "tbaytel", "ice wireless", "northwestel", "ssi", "distributel", "teksavvy", "start", "vmedia", "carrytel", "zazeen", "fido internet", "virgin internet", "rogers internet", "bell internet", "telus internet", "shaw internet", "videotron internet", "cogeco internet", "eastlink internet", "sasktel internet", "mts internet", "tbaytel internet", "rogers cable", "bell fibe", "telus optik", "shaw cable", "videotron cable", "cogeco cable", "eastlink cable", "sasktel max", "bell satellite", "shaw direct", "telus satellite", "rogers wireless", "bell mobility", "telus mobility", "freedom mobile", "fido mobile", "virgin mobile", "koodo mobile", "public mobile", "chatr", "lucky mobile", "petro canada", "esso", "shell", "chevron", "husky", "pioneer", "mohawk", "ultramar", "irving", "tempo", "fas gas", "co op gas", "canadian tire gas", "costco gas", "walmart gas", "superstore gas", "real canadian superstore gas", "loblaws gas", "provigo gas", "maxi gas", "metro gas", "sobeys gas", "safeway gas", "iga gas", "foodland gas", "extra foods gas", "no frills gas", "freshco gas", "food basics gas", "zehrs gas", "fortinos gas", "dominion gas", "atlantic superstore gas", "wholesale club gas", "real canadian wholesale club gas"] }
-  ];
-
-  function extractQuantityAndUnit(text: string): { qty?: number; unit?: string; cleanText: string } {
-    const qtyPatterns = [
-      /(\d+(?:\.\d+)?)\s*(kg|g|l|ml|pcs|pack|bunch|dozen)/i,
-      /x(\d+)/i,
-      /\((\d+)\)/,
-      /(\d+(?:\.\d+)?)\s*$/
-    ];
-
-    for (const pattern of qtyPatterns) {
-      const match = text.match(pattern);
-      if (match) {
-        const qty = parseFloat(match[1]);
-        let unit = match[2]?.toLowerCase() || "";
-        if (pattern.source.includes("x")) unit = "pack";
-        if (pattern.source.includes("\\(")) unit = "pcs";
-        
-        const cleanText = text.replace(pattern, "").trim().replace(/[-\s]+$/, "");
-        return { qty, unit, cleanText };
-      }
-    }
-    
-    return { cleanText: text.trim() };
-  }
-
-  function categorizeItem(item: string) {
-    const { qty, unit, cleanText } = extractQuantityAndUnit(item);
-    const norm = cleanText.toLowerCase().trim();
-    
-    if (!norm) return null;
-
-    for (const rule of rules) {
-      if (rule.keywords.some(keyword => norm.includes(keyword.toLowerCase()))) {
-        return {
-          input: item,
-          normalized_name: cleanText.toLowerCase(),
-          category: rule.category,
-          ...(qty && { qty }),
-          ...(unit && { unit })
-        };
-      }
-    }
-
-    return {
-      input: item,
-      normalized_name: cleanText.toLowerCase(),
-      category: "Other / Miscellaneous"
-    };
-  }
-
-  const processedItems = items
-    .map(item => categorizeItem(item))
-    .filter(item => item !== null);
-
-  return { items: processedItems };
+interface ProcessedItem {
+  input: string;
+  normalized_name: string;
+  category: string;
+  qty: number;
+  unit: string;
+  notes: string;
+  source: "text" | "url_page" | "url_video";
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+interface ProcessRequest {
+  items?: string[];
+  urls?: string[];
+  content?: string; // For when URLs have been fetched and content provided
+}
 
+async function fetchUrlContent(url: string): Promise<{ content: string; type: "page" | "video" }> {
   try {
-    const { items } = await req.json();
-    if (!Array.isArray(items)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid payload. Expected { items: string[] }." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    console.log(`Fetching content from: ${url}`);
+    
+    // Check if it's a video URL (YouTube, etc.)
+    const isVideo = /youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|tiktok\.com/i.test(url);
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; GroceryBot/1.0)',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
     }
+    
+    const content = await response.text();
+    
+    return {
+      content,
+      type: isVideo ? "video" : "page"
+    };
+  } catch (error) {
+    console.error(`Error fetching URL ${url}:`, error);
+    return { content: "", type: "page" };
+  }
+}
 
-    // If no API key, fallback to rules-based categorization
-    if (!openAIApiKey) {
-      console.warn("OPENAI_API_KEY not set – using fallback categorizer");
-      const result = categorizeFallback(items);
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+function createSystemPrompt(): string {
+  return `You are the AI engine of a grocery list app for UAE supermarkets (Carrefour/LuLu style).
+You must accept any input (free text list, OCR text, or content from web pages/videos) and return a categorized checklist suitable for in-store shopping.
 
-    const system = `You are an expert grocery categorization AI that understands items in Arabic, Hindi, Urdu, Tagalog, Malayalam, Tamil, and regional names. 
+CORE GOALS:
+- If input contains recipe content: Extract ingredients/grocery items from recipes
+- If input is a regular grocery list: categorize as usual
+- Always group output by supermarket aisle using EXACT aisle names
+- Preserve user's original wording for display while providing normalized English names
 
-CRITICAL: Be aggressive about proper categorization. "Other / Miscellaneous" should be used ONLY for truly non-grocery items or extremely unusual items that genuinely don't fit anywhere else.
+AISLE SET (use EXACT names):
+${UAE_AISLES.map(aisle => `- ${aisle}`).join('\n')}
 
-ALLOWED CATEGORIES (use EXACT spelling):
-Fruits & Vegetables, Meat & Poultry, Seafood, Dairy & Eggs, Bakery, Rice & Grains, Pasta, Noodles & Tomato Products, Spices & Masalas, Sauces, Oils & Condiments, Canned & Jarred Food, Tea, Coffee & Hot Drinks, Breakfast & Spreads, Snacks & Confectionery, Frozen Food, Baking Supplies, Drinks & Beverages, Cleaning & Household, Personal Care, Baby Products, Pet Products, Other / Miscellaneous
+CLASSIFICATION RULES:
+1. Context-first classification - consider entire phrase, not single keywords
+   - "Grape juice" → Drinks & Beverages (not Fruits & Vegetables)
+   - "Grilled chicken" → Meat & Poultry (ready-to-eat/cooked meat)
+   - "Frozen chicken ham" → Frozen Food (packaged frozen)
 
-CRITICAL CATEGORIZATION RULES (follow these EXACTLY):
+2. Fresh vs processed distinction:
+   - Fresh produce & fresh herbs → Fruits & Vegetables
+   - Processed/canned/bottled versions go to appropriate packaged aisles
+   - Tomato → Fruits & Vegetables; tomato paste → Pasta, Noodles & Tomato Products
+   - Fresh tuna → Seafood; canned tuna → Canned & Jarred Food
 
-**RULE #1: ANALYZE ENTIRE DESCRIPTION** - Never categorize based on single keywords. Consider the complete item description, preparation state, packaging, and context.
+3. Non-food override: toiletries/cleaning/pet items go to non-food aisles even with food words
+   - "Lemon dishwashing liquid" → Cleaning & Household
 
-Examples:
-- "Grape juice" → Drinks & Beverages (NOT Fruits & Vegetables - juice is processed)
-- "Grilled chicken" → Meat & Poultry (NOT Hot Foods - still primarily meat)
-- "Frozen chicken ham" → Frozen Food (NOT Hot Foods - frozen state is key)
-- "Tomato paste" → Pasta, Noodles & Tomato Products (NOT Fruits & Vegetables - processed)
+4. Multi-language & regional synonyms (preserve original, normalize internally):
+   - lauki/doodhi/sorakaya → bottle gourd → Fruits & Vegetables
+   - brinjal/aubergine/baingan → eggplant → Fruits & Vegetables
+   - lady's finger/bhindi → okra → Fruits & Vegetables
+   - pudina → mint → Fruits & Vegetables
+   - cilantro → coriander → Fruits & Vegetables
+   - khubz → pita → Bakery
+   - labneh → Dairy & Eggs
 
-1. PROCESSED vs FRESH FOODS: 
-   - "tomato paste", "tomato sauce", "tomato puree" → Pasta, Noodles & Tomato Products (NOT Fruits & Vegetables)
-   - Fresh tomatoes → Fruits & Vegetables
-   - "orange juice", "apple juice", ANY juice → Drinks & Beverages (NOT Fruits & Vegetables)
-   - Fresh oranges/apples → Fruits & Vegetables
+RECIPE EXTRACTION:
+- Extract ingredient lists from recipes, ignoring cooking instructions
+- Parse quantities, units, and notes from ingredient lines
+- Handle ranges ("1-2 tsp"), fractions ("½ cup"), descriptors ("large onion")
+- If no recipe/ingredients found, return status: "no_recipe_found"
 
-2. SNACKS (packaged/processed):
-   - "popcorn", "chips", "crackers", "nuts" (packaged), "biscuits", "cookies" → Snacks & Confectionery
-   - NOT Fruits & Vegetables even if made from vegetables/grains
+QUANTITY & UNIT PARSING:
+Recognize: kg, g, l, ml, pcs, pack, bunch, dozen, cup, tbsp, tsp
+Patterns: 2 kg, 500 g, 1 l, 250 ml, 12 pcs, 1 pack, 1 bunch, fractions (1/2, ½)
 
-3. NON-FOOD ITEMS:
-   - "shampoo", "soap", "toothpaste", "lotion", "deodorant" → Personal Care
-   - "detergent", "dishwashing liquid", "cleaner", "toilet paper" → Cleaning & Household
-   - "cat food", "dog food", "pet treats" → Pet Products
-   - "diapers", "baby formula", "baby food" → Baby Products
-
-4. MEAT KEYWORDS:
-   - "meat", "beef", "chicken", "pork", "lamb", "mutton", "turkey" → Meat & Poultry
-   - NEVER put generic "meat" in Other / Miscellaneous
-
-5. REGIONAL NAME MAPPING:
-   - "lady's finger", "bhindi" → okra → Fruits & Vegetables (NOT Pet Products)
-   - "lauki", "bottle gourd" → Fruits & Vegetables
-   - "brinjal", "baingan" → eggplant → Fruits & Vegetables
-
-6. CONTEXT CLUES - focus on the MAIN ITEM, ignore packaging words:
-   - "shampoo bottle" = shampoo → Personal Care
-   - "tomato paste can" = tomato paste → Pasta, Noodles & Tomato Products
-   - "orange juice bottle" = orange juice → Drinks & Beverages
-
-CATEGORIZATION PRIORITY:
-1. Apply the critical rules above FIRST
-2. Think about what the item actually IS (food, beverage, household item, etc.)
-3. Match it to the most appropriate category - be creative and logical
-4. Use "Other / Miscellaneous" ONLY if absolutely no other category makes sense
-5. When in doubt between categories, pick the most logical one based on where customers would expect to find it
-
-Return STRICT JSON only matching this schema:
+OUTPUT FORMAT (JSON only):
 {
+  "status": "ok" | "no_recipe_found",
+  "notice": "string (optional explanation; required if no_recipe_found)",
   "items": [
     {
-      "input": "exact user text",
-      "normalized_name": "english canonical name", 
-      "category": "one of the allowed categories",
-      "qty": number (if found),
-      "unit": "kg|g|l|ml|pcs|pack|bunch|dozen" (if found),
-      "notes": "additional descriptors" (if any)
+      "input": "exact user/source text (preserve casing/spelling)",
+      "normalized_name": "english canonical name (singular, lowercase)",
+      "category": "one of the allowed categories above",
+      "qty": number,
+      "unit": "kg|g|l|ml|pcs|pack|bunch|dozen|cup|tbsp|tsp|",
+      "notes": "extra descriptors (size, brand, prep hints)",
+      "source": "text|url_page|url_video"
     }
   ]
 }
 
-Rules:
-- Keep original input exactly as typed for display
-- Create normalized_name in English (singular, lowercase unless common plural like "eggs")
-- Extract quantities: "2 kg", "x3" means qty 3, "(12)" means qty 12
-- Regional mappings: lauki→bottle gourd, bhindi→okra, paneer→paneer, khubz→pita, etc.
-- AVOID "Other / Miscellaneous" - be creative with categorization
-- Omit qty/unit/notes if not present`;
+RULES:
+- Return valid JSON only, no markdown
+- Use "Other / Miscellaneous" only as last resort
+- Deduplicate identical items when possible
+- Keep input as original text for display
+- Use normalized_name for internal categorization only`;
+}
 
-    const user = `Items to categorize (JSON array):\n${JSON.stringify(items)}`;
+function parseQuantityAndUnit(text: string): { qty: number; unit: string; notes: string } {
+  // Clean the text
+  const cleaned = text.toLowerCase().trim();
+  
+  // Common unit mappings
+  const unitMap: Record<string, string> = {
+    'kilogram': 'kg', 'kilograms': 'kg', 'kilo': 'kg', 'kilos': 'kg',
+    'gram': 'g', 'grams': 'g', 'gm': 'g', 'gms': 'g',
+    'liter': 'l', 'liters': 'l', 'litre': 'l', 'litres': 'l',
+    'milliliter': 'ml', 'milliliters': 'ml', 'millilitre': 'ml', 'millilitres': 'ml',
+    'piece': 'pcs', 'pieces': 'pcs', 'pc': 'pcs',
+    'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'table spoon': 'tbsp',
+    'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tea spoon': 'tsp',
+    'cups': 'cup', 'dozens': 'dozen', 'bunches': 'bunch', 'packs': 'pack', 'packets': 'pack',
+    'bottle': 'pack', 'bottles': 'pack', 'jar': 'pack', 'jars': 'pack',
+    'can': 'pack', 'cans': 'pack', 'box': 'pack', 'boxes': 'pack',
+    'bag': 'pack', 'bags': 'pack', 'tub': 'pack', 'tubs': 'pack'
+  };
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+  // Patterns to extract quantity and unit
+  const patterns = [
+    // Fractions: ½, 1/2, 1 1/2
+    /(\d+\s*[½¼¾]|\d+\s*\/\s*\d+|\d+\s+\d+\s*\/\s*\d+)\s*(kg|g|l|ml|pcs|pack|bunch|dozen|cup|tbsp|tsp|kilogram|gram|liter|milliliter|piece|tablespoon|teaspoon|cups|dozens|bunches|packs|packets|bottle|bottles|jar|jars|can|cans|box|boxes|bag|bags|tub|tubs)/i,
+    // Regular numbers: 2 kg, 500 g, etc.
+    /(\d+(?:\.\d+)?)\s*(kg|g|l|ml|pcs|pack|bunch|dozen|cup|tbsp|tsp|kilogram|gram|liter|milliliter|piece|tablespoon|teaspoon|cups|dozens|bunches|packs|packets|bottle|bottles|jar|jars|can|cans|box|boxes|bag|bags|tub|tubs)/i,
+    // Parentheses: (12), x3
+    /[x×]\s*(\d+)|[\(（](\d+)[\)）]/i,
+    // Just numbers at start
+    /^(\d+(?:\.\d+)?)/
+  ];
+
+  for (const pattern of patterns) {
+    const match = cleaned.match(pattern);
+    if (match) {
+      let qtyStr = match[1] || match[2] || '1';
+      let unitStr = match[2] || match[3] || '';
+
+      // Handle fractions
+      if (qtyStr.includes('/')) {
+        const parts = qtyStr.split(/\s+/);
+        let total = 0;
+        for (const part of parts) {
+          if (part.includes('/')) {
+            const [num, den] = part.split('/').map(Number);
+            total += num / den;
+          } else if (!isNaN(Number(part))) {
+            total += Number(part);
+          }
+        }
+        qtyStr = total.toString();
+      } else if (qtyStr.includes('½')) {
+        qtyStr = qtyStr.replace('½', '0.5');
+      } else if (qtyStr.includes('¼')) {
+        qtyStr = qtyStr.replace('¼', '0.25');
+      } else if (qtyStr.includes('¾')) {
+        qtyStr = qtyStr.replace('¾', '0.75');
+      }
+
+      const qty = parseFloat(qtyStr) || 1;
+      const unit = unitMap[unitStr.toLowerCase()] || unitStr.toLowerCase() || '';
+      const notes = text.replace(match[0], '').trim();
+
+      return { qty, unit, notes };
+    }
+  }
+
+  return { qty: 1, unit: '', notes: text };
+}
+
+async function processWithAI(content: string, sourceType: "text" | "url_page" | "url_video"): Promise<any> {
+  try {
+    const prompt = `${createSystemPrompt()}
+
+INPUT TYPE: ${sourceType}
+CONTENT TO PROCESS:
+${content}
+
+Extract grocery items and categorize them according to UAE supermarket aisles. Return valid JSON only.`;
+
+    console.log('Sending request to OpenAI...');
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${openAIApiKey}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0,
-        response_format: { type: "json_object" },
+        model: 'gpt-4o-mini', // Using legacy model for reliable results
         messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
+          { role: 'system', content: createSystemPrompt() },
+          { role: 'user', content: prompt }
         ],
+        max_tokens: 2000,
+        temperature: 0.1,
       }),
     });
 
-    const data = await response.json();
     if (!response.ok) {
-      console.error("OpenAI error response:", data);
-      const result = categorizeFallback(items);
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    const content = data?.choices?.[0]?.message?.content;
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
 
-    let parsed: unknown;
-    try {
-      if (typeof content === "string") {
-        try {
-          parsed = JSON.parse(content);
-        } catch {
-          const start = content.indexOf("{");
-          const end = content.lastIndexOf("}");
-          if (start !== -1 && end !== -1 && end > start) {
-            parsed = JSON.parse(content.slice(start, end + 1));
-          } else {
-            throw new Error("No JSON object found in content");
-          }
-        }
-      } else {
-        throw new Error("Empty or invalid content from model");
-      }
-    } catch (e) {
-      console.error("Failed to parse model JSON:", e, "content:", content);
-      const result = categorizeFallback(items);
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    console.log('AI Response:', aiResponse);
+
+    // Parse the JSON response
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in AI response');
     }
 
-    return new Response(JSON.stringify(parsed), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("Error in generate-with-ai function:", error);
-    // Even if unexpected, do a best-effort fallback to keep UX flowing
-    try {
-      const { items } = await req.json();
-      const result = Array.isArray(items) ? categorizeFallback(items) : { error: "Unexpected error" };
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } catch {
-      return new Response(JSON.stringify({ error: "Unexpected error" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    console.error('AI processing error:', error);
+    throw error;
+  }
+}
+
+function fallbackCategorization(items: string[], sourceType: "text" | "url_page" | "url_video"): any {
+  console.log('Using fallback categorization');
+  
+  const processedItems: ProcessedItem[] = items.map(item => {
+    const { qty, unit, notes } = parseQuantityAndUnit(item);
+    
+    // Simple keyword-based categorization
+    let category = "Other / Miscellaneous";
+    const itemLower = item.toLowerCase();
+    
+    // Basic categorization rules
+    if (/tomato|onion|potato|carrot|cucumber|lettuce|spinach|broccoli|apple|banana|orange|lemon|garlic|ginger|mint|coriander|lauki|brinjal|bhindi|okra|capsicum|pepper/i.test(itemLower)) {
+      category = "Fruits & Vegetables";
+    } else if (/chicken|beef|mutton|lamb|meat|fish|salmon|tuna|shrimp|prawns/i.test(itemLower)) {
+      category = "Meat & Poultry";
+    } else if (/milk|cheese|yogurt|butter|eggs|paneer|labneh/i.test(itemLower)) {
+      category = "Dairy & Eggs";
+    } else if (/bread|naan|roti|pita|khubz/i.test(itemLower)) {
+      category = "Bakery";
+    } else if (/rice|wheat|dal|lentils|quinoa|oats|atta|flour/i.test(itemLower)) {
+      category = "Rice & Grains";
+    } else if (/oil|vinegar|sauce|ketchup|mustard|spice|masala|salt|pepper/i.test(itemLower)) {
+      category = "Sauces, Oils & Condiments";
     }
+
+    return {
+      input: item,
+      normalized_name: item.toLowerCase().replace(/[^\w\s]/g, '').trim(),
+      category,
+      qty,
+      unit,
+      notes,
+      source: sourceType
+    };
+  });
+
+  return {
+    status: "ok",
+    items: processedItems
+  };
+}
+
+serve(async (req) => {
+  console.log(`${req.method} ${req.url}`);
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { 
+      status: 405, 
+      headers: corsHeaders 
+    });
+  }
+
+  try {
+    const body = await req.json() as ProcessRequest;
+    console.log('Request body:', JSON.stringify(body, null, 2));
+
+    let contentToProcess = '';
+    let sourceType: "text" | "url_page" | "url_video" = "text";
+    let allItems: string[] = [];
+
+    // Handle text items
+    if (body.items && body.items.length > 0) {
+      allItems = [...body.items];
+      contentToProcess += body.items.join('\n') + '\n';
+    }
+
+    // Handle URLs
+    if (body.urls && body.urls.length > 0) {
+      for (const url of body.urls) {
+        console.log(`Processing URL: ${url}`);
+        const { content, type } = await fetchUrlContent(url);
+        if (content) {
+          contentToProcess += `\nContent from ${url}:\n${content}\n`;
+          sourceType = type === "video" ? "url_video" : "url_page";
+        }
+      }
+    }
+
+    // Handle pre-fetched content
+    if (body.content) {
+      contentToProcess += body.content;
+    }
+
+    if (!contentToProcess.trim()) {
+      return new Response(
+        JSON.stringify({
+          status: "no_recipe_found",
+          notice: "No content provided to process",
+          items: []
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    let result;
+    
+    if (!openAIApiKey) {
+      console.log('No OpenAI API key, using fallback');
+      result = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
+    } else {
+      try {
+        result = await processWithAI(contentToProcess, sourceType);
+      } catch (aiError) {
+        console.error('AI processing failed, using fallback:', aiError);
+        result = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
+      }
+    }
+
+    console.log('Final result:', JSON.stringify(result, null, 2));
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in generate-with-ai function:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        status: "error",
+        items: []
+      }), 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
