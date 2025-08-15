@@ -120,18 +120,29 @@ export default function Index() {
     return orderedKeys.map((k) => ({ aisle: k, items: map.get(k)! }));
   }, [items]);
 
-  const categorize = useCallback(async (rawItems: string[]) => {
-    if (rawItems.length === 0) {
-      toast.error("No items to categorize");
+  const categorize = useCallback(async (rawItems: string[], urls: string[] = []) => {
+    if (rawItems.length === 0 && urls.length === 0) {
+      toast.error("No items or URLs to categorize");
       return;
     }
     setLoading("ai");
-    const t = toast.loading("Categorizing items…");
+    const t = toast.loading(urls.length > 0 ? "Processing URL and categorizing items…" : "Categorizing items…");
     try {
+      const requestBody: any = {};
+      if (rawItems.length > 0) requestBody.items = rawItems;
+      if (urls.length > 0) requestBody.urls = urls;
+      
       const { data, error } = await supabase.functions.invoke("generate-with-ai", {
-        body: { items: rawItems },
+        body: requestBody,
       });
       if (error) throw error;
+      
+      // Handle new response format
+      if (data.status === "no_recipe_found") {
+        toast.error(data.notice || "No recipe items found in the provided content", { id: t });
+        return;
+      }
+      
       const next = itemsFromAislesJson(data);
       setItems(next);
       toast.success("Checklist ready", { id: t });
@@ -145,9 +156,26 @@ export default function Index() {
   }, []);
 
   const handleFromText = async () => {
-    const list = parseLines(text);
-    await categorize(list);
-    if (list.length > 0) {
+    const inputText = text.trim();
+    if (!inputText) return;
+
+    // Check if input contains URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = inputText.match(urlRegex) || [];
+    
+    if (urls.length > 0) {
+      // If there are URLs, extract them and get remaining text
+      const remainingText = inputText.replace(urlRegex, '').trim();
+      const textItems = remainingText ? parseLines(remainingText) : [];
+      
+      await categorize(textItems, urls);
+    } else {
+      // No URLs, process as regular text
+      const list = parseLines(inputText);
+      await categorize(list);
+    }
+    
+    if (inputText.length > 0) {
       setScreen("output");
     }
   };
@@ -311,7 +339,7 @@ export default function Index() {
         <div className="space-y-6">
           <div className="bg-card border border-border rounded-[0.75rem] p-6 min-h-[240px]">
             <Textarea
-              placeholder="Tap to paste"
+              placeholder="Tap to paste grocery list or recipe URLs..."
               value={text}
               onChange={(e) => setText(e.target.value)}
               onFocus={handleTextareaFocus}

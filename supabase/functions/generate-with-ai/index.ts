@@ -57,20 +57,69 @@ async function fetchUrlContent(url: string): Promise<{ content: string; type: "p
     // Check if it's a video URL (YouTube, etc.)
     const isVideo = /youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|tiktok\.com/i.test(url);
     
+    if (isVideo) {
+      // For video URLs, we'll extract the video ID and get metadata
+      console.log(`Detected video URL: ${url}`);
+      
+      // Extract video ID from YouTube URLs
+      let videoId = '';
+      const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+      if (youtubeMatch) {
+        videoId = youtubeMatch[1];
+        console.log(`Extracted YouTube video ID: ${videoId}`);
+        
+        // Get YouTube video title and description via oEmbed API
+        try {
+          const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+          const oembedResponse = await fetch(oembedUrl);
+          if (oembedResponse.ok) {
+            const oembedData = await oembedResponse.json();
+            console.log(`YouTube oEmbed data:`, oembedData);
+            return {
+              content: `Video Title: ${oembedData.title}\nAuthor: ${oembedData.author_name}\nProvider: ${oembedData.provider_name}`,
+              type: "video"
+            };
+          }
+        } catch (oembedError) {
+          console.error('oEmbed fetch failed:', oembedError);
+        }
+      }
+      
+      // Fallback: try to fetch the page content anyway
+      console.log('Falling back to page content fetch for video URL');
+    }
+    
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; GroceryBot/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
       },
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status}`);
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
     }
     
     const content = await response.text();
+    console.log(`Fetched content length: ${content.length}`);
+    
+    // Extract meaningful content from HTML
+    let extractedContent = content;
+    if (content.includes('<html')) {
+      // Basic HTML parsing to extract text content
+      extractedContent = content
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
     
     return {
-      content,
+      content: extractedContent,
       type: isVideo ? "video" : "page"
     };
   } catch (error) {
@@ -272,28 +321,94 @@ Extract grocery items and categorize them according to UAE supermarket aisles. R
 }
 
 function fallbackCategorization(items: string[], sourceType: "text" | "url_page" | "url_video"): any {
-  console.log('Using fallback categorization');
+  console.log('Using fallback categorization for items:', items);
   
   const processedItems: ProcessedItem[] = items.map(item => {
     const { qty, unit, notes } = parseQuantityAndUnit(item);
     
-    // Simple keyword-based categorization
     let category = "Other / Miscellaneous";
     const itemLower = item.toLowerCase();
     
-    // Basic categorization rules
-    if (/tomato|onion|potato|carrot|cucumber|lettuce|spinach|broccoli|apple|banana|orange|lemon|garlic|ginger|mint|coriander|lauki|brinjal|bhindi|okra|capsicum|pepper/i.test(itemLower)) {
+    // Comprehensive categorization rules
+    // Fruits & Vegetables (including regional names)
+    if (/\b(tomato|onion|potato|carrot|cucumber|lettuce|spinach|broccoli|apple|banana|orange|lemon|lime|garlic|ginger|mint|coriander|cilantro|parsley|dhania|pudina|lauki|doodhi|sorakaya|bottle gourd|brinjal|aubergine|baingan|eggplant|lady finger|ladyfinger|bhindi|okra|capsicum|bell pepper|pepper|cauliflower|cabbage|beetroot|radish|turnip|sweet potato|pumpkin|squash|zucchini|avocado|mango|pineapple|watermelon|grapes|strawberry|blueberry|kiwi|papaya|guava|pomegranate|dates|figs|coconut|mushroom|herbs|basil|oregano|thyme|rosemary|celery|asparagus|green beans|peas|corn|artichoke|kale|arugula|chard|bok choy|scallions|shallots|leeks|fennel|brussels sprouts|baby corn|fresh)\b/i.test(itemLower)) {
       category = "Fruits & Vegetables";
-    } else if (/chicken|beef|mutton|lamb|meat|fish|salmon|tuna|shrimp|prawns/i.test(itemLower)) {
+    }
+    // Meat & Poultry
+    else if (/\b(chicken|beef|mutton|lamb|goat|pork|turkey|duck|meat|steak|ground beef|ground chicken|wings|thighs|breast|drumsticks|bacon|ham|sausage|salami|pepperoni|hot dogs|ribs|tenderloin|roast|brisket|mince)\b/i.test(itemLower)) {
       category = "Meat & Poultry";
-    } else if (/milk|cheese|yogurt|butter|eggs|paneer|labneh/i.test(itemLower)) {
+    }
+    // Seafood
+    else if (/\b(fish|salmon|tuna|cod|tilapia|shrimp|prawns|crab|lobster|mussels|clams|oysters|scallops|squid|octopus|sea bass|mackerel|sardines|anchovies|halibut|sole|flounder|snapper|grouper|catfish|trout)\b/i.test(itemLower)) {
+      category = "Seafood";
+    }
+    // Dairy & Eggs
+    else if (/\b(milk|cheese|yogurt|yoghurt|butter|cream|eggs|paneer|labneh|curd|cottage cheese|mozzarella|cheddar|parmesan|feta|goat cheese|cream cheese|sour cream|heavy cream|buttermilk|ice cream|gelato)\b/i.test(itemLower)) {
       category = "Dairy & Eggs";
-    } else if (/bread|naan|roti|pita|khubz/i.test(itemLower)) {
+    }
+    // Bakery
+    else if (/\b(bread|bun|bagel|roll|croissant|pita|khubz|naan|roti|chapati|paratha|baguette|sourdough|whole wheat|white bread|dinner roll|hamburger bun|english muffin|muffin|cake|cookie|pastry|donut|danish|pie|tart|scone|biscuit)\b/i.test(itemLower)) {
       category = "Bakery";
-    } else if (/rice|wheat|dal|lentils|quinoa|oats|atta|flour/i.test(itemLower)) {
+    }
+    // Rice & Grains
+    else if (/\b(rice|basmati|jasmine|brown rice|white rice|wheat|quinoa|oats|barley|dal|lentils|beans|rajma|moong|toor|chana|chickpeas|black beans|kidney beans|pinto beans|atta|flour|sooji|rava|semolina|bulgur|couscous|farro|millet|buckwheat)\b/i.test(itemLower)) {
       category = "Rice & Grains";
-    } else if (/oil|vinegar|sauce|ketchup|mustard|spice|masala|salt|pepper/i.test(itemLower)) {
+    }
+    // Pasta, Noodles & Tomato Products
+    else if (/\b(pasta|spaghetti|penne|fusilli|macaroni|noodles|ramen|udon|shirataki|vermicelli|linguine|fettuccine|lasagna|ravioli|tomato paste|tomato sauce|marinara|pizza sauce|pasta sauce|crushed tomatoes|diced tomatoes)\b/i.test(itemLower)) {
+      category = "Pasta, Noodles & Tomato Products";
+    }
+    // Spices & Masalas
+    else if (/\b(spice|masala|turmeric|cumin|coriander|garam masala|chili powder|red chili|black pepper|white pepper|salt|paprika|cinnamon|cardamom|cloves|nutmeg|bay leaves|oregano|basil|thyme|rosemary|sage|dill|curry powder|tandoori|biryani masala|chat masala)\b/i.test(itemLower)) {
+      category = "Spices & Masalas";
+    }
+    // Sauces, Oils & Condiments
+    else if (/\b(oil|olive oil|coconut oil|vegetable oil|sesame oil|vinegar|balsamic|sauce|ketchup|mustard|mayo|mayonnaise|soy sauce|fish sauce|hot sauce|barbecue sauce|teriyaki|tahini|hummus|pesto|salsa|ranch|caesar|honey mustard|sriracha|wasabi|horseradish)\b/i.test(itemLower)) {
       category = "Sauces, Oils & Condiments";
+    }
+    // Canned & Jarred Food
+    else if (/\b(canned|jarred|can of|jar of|preserves|jam|jelly|marmalade|pickles|olives|canned tomatoes|canned beans|canned corn|canned tuna|canned salmon|broth|stock|soup|applesauce|coconut milk)\b/i.test(itemLower)) {
+      category = "Canned & Jarred Food";
+    }
+    // Tea, Coffee & Hot Drinks
+    else if (/\b(tea|coffee|chai|green tea|black tea|herbal tea|chamomile|peppermint|earl grey|espresso|cappuccino|latte|instant coffee|ground coffee|coffee beans|hot chocolate|cocoa|matcha)\b/i.test(itemLower)) {
+      category = "Tea, Coffee & Hot Drinks";
+    }
+    // Breakfast & Spreads
+    else if (/\b(cereal|oatmeal|granola|muesli|pancake mix|waffle|honey|maple syrup|peanut butter|almond butter|nutella|jam|jelly|marmalade|corn flakes|cheerios|oats|steel cut oats)\b/i.test(itemLower)) {
+      category = "Breakfast & Spreads";
+    }
+    // Snacks & Confectionery
+    else if (/\b(chips|crackers|cookies|chocolate|candy|nuts|almonds|peanuts|cashews|walnuts|pistachios|popcorn|pretzels|trail mix|granola bars|energy bars|protein bars|chocolate bar|gummy|dried fruit|raisins)\b/i.test(itemLower)) {
+      category = "Snacks & Confectionery";
+    }
+    // Frozen Food
+    else if (/\b(frozen|ice cream|frozen vegetables|frozen fruit|frozen pizza|nuggets|fish sticks|frozen berries|frozen peas|frozen corn|frozen chicken|frozen meals|popsicles|sorbet|gelato)\b/i.test(itemLower)) {
+      category = "Frozen Food";
+    }
+    // Baking Supplies
+    else if (/\b(baking powder|baking soda|vanilla extract|cocoa powder|chocolate chips|powdered sugar|brown sugar|white sugar|cake mix|icing|frosting|food coloring|cornstarch|gelatin)\b/i.test(itemLower)) {
+      category = "Baking Supplies";
+    }
+    // Drinks & Beverages
+    else if (/\b(juice|soda|water|sparkling water|energy drink|sports drink|lemonade|iced tea|soft drink|cola|orange juice|apple juice|cranberry juice|grape juice|coconut water|smoothie)\b/i.test(itemLower)) {
+      category = "Drinks & Beverages";
+    }
+    // Cleaning & Household
+    else if (/\b(detergent|soap|shampoo|conditioner|toothpaste|toilet paper|paper towels|napkins|aluminum foil|plastic wrap|garbage bags|cleaning supplies|dish soap|laundry|fabric softener|bleach|disinfectant)\b/i.test(itemLower)) {
+      category = "Cleaning & Household";
+    }
+    // Personal Care
+    else if (/\b(shampoo|conditioner|body wash|lotion|moisturizer|deodorant|perfume|toothbrush|toothpaste|mouthwash|razor|shaving cream|sunscreen|makeup|lipstick|nail polish)\b/i.test(itemLower)) {
+      category = "Personal Care";
+    }
+    // Baby Products
+    else if (/\b(baby|infant|diapers|baby food|formula|baby lotion|baby shampoo|pacifier|baby wipes|nursing|bottle)\b/i.test(itemLower)) {
+      category = "Baby Products";
+    }
+    // Pet Products
+    else if (/\b(pet|dog|cat|bird|fish|pet food|dog food|cat food|bird seed|fish food|pet treats|litter|pet toys)\b/i.test(itemLower)) {
+      category = "Pet Products";
     }
 
     return {
