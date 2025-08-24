@@ -340,7 +340,7 @@ export default function Index() {
                 <AlertDialogTrigger asChild>
                   <Button 
                     onClick={handleNewList}
-                    className="w-full py-4 h-auto text-lg font-medium"
+                    className="w-full py-4 h-auto text-lg font-semibold"
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     New
@@ -387,7 +387,7 @@ export default function Index() {
                 />
                 <Button 
                   onClick={saveAmount}
-                  className="w-full py-3 text-lg font-medium"
+                  className="w-full py-3 text-lg font-semibold"
                   disabled={!amountInput.trim()}
                 >
                   Save amount
@@ -454,7 +454,7 @@ export default function Index() {
             <Button
               onClick={text.trim() ? handleFromText : handleFromImage}
               disabled={(!text.trim() && !file) || loading !== "idle"}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-medium border-0"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-semibold border-0"
             >
               {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
               <ArrowRight className="ml-3 h-5 w-5" />
@@ -467,7 +467,7 @@ export default function Index() {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="secondary"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -485,7 +485,7 @@ export default function Index() {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-medium flex flex-col items-center"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center"
                   onClick={() => {
                     const input = document.createElement('input');
                     input.type = 'file';
