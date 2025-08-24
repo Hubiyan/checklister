@@ -152,7 +152,7 @@ export default function Index() {
   const [tappedItem, setTappedItem] = useState<string | null>(null);
   const [showUnrecognizedModal, setShowUnrecognizedModal] = useState(false);
   const [selectedUnrecognizedItems, setSelectedUnrecognizedItems] = useState<Set<string>>(new Set());
-  const [showMoveToModal, setShowMoveToModal] = useState(false);
+  const [unrecognizedModalView, setUnrecognizedModalView] = useState<'items' | 'categories'>('items');
 
   // Load/save local state
   useEffect(() => {
@@ -415,7 +415,7 @@ export default function Index() {
       ));
       toast.success(`Moved ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''} to ${newAisle}`);
       setSelectedUnrecognizedItems(new Set());
-      setShowMoveToModal(false);
+      setUnrecognizedModalView('items');
       setShowUnrecognizedModal(false);
     }
   };
@@ -624,92 +624,100 @@ export default function Index() {
           </Dialog>
 
           {/* Unrecognized Items Modal */}
-          <Dialog open={showUnrecognizedModal} onOpenChange={setShowUnrecognizedModal}>
+          <Dialog open={showUnrecognizedModal} onOpenChange={(open) => {
+            setShowUnrecognizedModal(open);
+            if (!open) {
+              setUnrecognizedModalView('items');
+            }
+          }}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
               <DialogHeader className="px-4 py-3 border-b-[0.5px] border-[#D5D5D5]">
                 <DialogTitle className="text-base font-bold text-black text-left flex items-center gap-2">
+                  {unrecognizedModalView === 'categories' && (
+                    <button
+                      onClick={() => setUnrecognizedModalView('items')}
+                      className="mr-2"
+                    >
+                      ←
+                    </button>
+                  )}
                   <span className="text-lg">❓</span>
-                  Unrecognized
+                  {unrecognizedModalView === 'items' ? 'Unrecognized' : 'Move to'}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-0 max-h-96 overflow-y-auto">
-                {items.filter(item => item.aisle === "Unrecognized").map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleUnrecognizedItemSelection(item.id)}
-                    className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${
-                      selectedUnrecognizedItems.has(item.id) ? 'bg-[#009C00]' : 'bg-white hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex-shrink-0">
-                      <Checkbox 
-                        checked={selectedUnrecognizedItems.has(item.id)}
-                        onCheckedChange={() => toggleUnrecognizedItemSelection(item.id)}
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className={`text-sm font-medium ${
-                        selectedUnrecognizedItems.has(item.id) ? 'text-[#FFFFFF]' : 'text-black'
-                      }`}>
-                        {item.name}
-                      </span>
-                    </div>
+              
+              {unrecognizedModalView === 'items' ? (
+                <>
+                  <div className="space-y-0 max-h-96 overflow-y-auto">
+                    {items.filter(item => item.aisle === "Unrecognized").map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => toggleUnrecognizedItemSelection(item.id)}
+                        className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${
+                          selectedUnrecognizedItems.has(item.id) ? 'bg-[#009C00]' : 'bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex-shrink-0">
+                          <Checkbox 
+                            checked={selectedUnrecognizedItems.has(item.id)}
+                            onCheckedChange={() => toggleUnrecognizedItemSelection(item.id)}
+                          />
+                        </div>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className={`text-sm font-medium ${
+                            selectedUnrecognizedItems.has(item.id) ? 'text-[#FFFFFF]' : 'text-black'
+                          }`}>
+                            {item.name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-3 px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
-                <button
-                  onClick={deleteSelectedItems}
-                  disabled={selectedUnrecognizedItems.size === 0}
-                  className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                    selectedUnrecognizedItems.size > 0 
-                      ? 'bg-red-500 hover:bg-red-600' 
-                      : 'bg-[#F6F6F9]'
-                  }`}
-                >
-                  <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-white' : 'text-[#8E8E93]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setShowMoveToModal(true)}
-                  disabled={selectedUnrecognizedItems.size === 0}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
-                    selectedUnrecognizedItems.size > 0 
-                      ? 'bg-[#E8F5E8] text-[#006428] border border-[#E8F5E8] hover:bg-[#D4F4D4]' 
-                      : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
-                  }`}
-                >
-                  Move to
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Move To Categories Modal */}
-          <Dialog open={showMoveToModal} onOpenChange={setShowMoveToModal}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
-              <DialogHeader className="pb-2">
-                <DialogTitle className="text-lg font-semibold text-black text-left">
-                  Move to
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-0">
-                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
-                  <button
-                    key={aisle}
-                    onClick={() => moveSelectedItemsToCategory(aisle)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                      <span className="text-base font-medium text-black">{aisle}</span>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
-                  </button>
-                ))}
-              </div>
+                  <div className="flex items-center gap-3 px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
+                    <button
+                      onClick={deleteSelectedItems}
+                      disabled={selectedUnrecognizedItems.size === 0}
+                      className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                        selectedUnrecognizedItems.size > 0 
+                          ? 'bg-red-500 hover:bg-red-600' 
+                          : 'bg-[#F6F6F9]'
+                      }`}
+                    >
+                      <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-white' : 'text-[#8E8E93]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setUnrecognizedModalView('categories')}
+                      disabled={selectedUnrecognizedItems.size === 0}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
+                        selectedUnrecognizedItems.size > 0 
+                          ? 'bg-[#E8F5E8] text-[#006428] border border-[#E8F5E8] hover:bg-[#D4F4D4]' 
+                          : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
+                      }`}
+                    >
+                      Move to
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-0 max-h-96 overflow-y-auto">
+                  {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
+                    <button
+                      key={aisle}
+                      onClick={() => moveSelectedItemsToCategory(aisle)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                        <span className="text-base font-medium text-black">{aisle}</span>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-gray-400" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
