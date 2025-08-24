@@ -631,7 +631,7 @@ export default function Index() {
             }
           }}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="px-4 py-3 border-b-[0.5px] border-[#D5D5D5]">
+              <DialogHeader className="px-4 py-3">
                 <DialogTitle className="text-base font-bold text-black text-left flex items-center gap-2">
                   {unrecognizedModalView === 'categories' && (
                     <button
@@ -641,7 +641,6 @@ export default function Index() {
                       ←
                     </button>
                   )}
-                  <span className="text-lg">❓</span>
                   {unrecognizedModalView === 'items' ? 'Unrecognized' : 'Move to'}
                 </DialogTitle>
               </DialogHeader>
