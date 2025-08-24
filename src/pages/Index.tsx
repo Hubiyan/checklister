@@ -289,19 +289,17 @@ export default function Index() {
           {/* Checklist */}
           <div className="space-y-6 pb-20">
             {grouped.map(({ aisle, items }, index) => (
-              <section key={aisle} className="bg-transparent border-[0.5px] border-[hsl(var(--category-border))] rounded-lg p-0 shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
+              <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
-                  <h2 className="text-base font-bold text-black mb-2 flex items-center gap-2">
+                  <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white">
                     {aisle}
-                    <span className="text-xs bg-gray-900 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                      {items.length}
-                    </span>
+                    <span className="text-lg">🥬</span>
                   </h2>
                   <div className="space-y-0">
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
+                        className={`flex items-center space-x-3 px-4 py-3 transition-colors cursor-pointer border-t border-gray-100 first:border-t-0 ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
                         }`}
                         onClick={() => toggleItem(item)}
