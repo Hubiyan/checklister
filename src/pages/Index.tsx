@@ -673,7 +673,7 @@ export default function Index() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
+                  <div className="flex items-center justify-between px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
                     <button
                       onClick={deleteSelectedItems}
                       disabled={selectedUnrecognizedItems.size === 0}
@@ -690,9 +690,9 @@ export default function Index() {
                     <button
                       onClick={() => setUnrecognizedModalView('categories')}
                       disabled={selectedUnrecognizedItems.size === 0}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
                         selectedUnrecognizedItems.size > 0 
-                          ? 'bg-[#E8F5E8] text-[#006428] border border-[#E8F5E8] hover:bg-[#D4F4D4]' 
+                          ? 'bg-[#004200] text-[#E6F5E6] hover:bg-[#003000]' 
                           : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
                       }`}
                     >
