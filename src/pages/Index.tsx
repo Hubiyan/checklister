@@ -149,6 +149,7 @@ export default function Index() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [itemToMove, setItemToMove] = useState<ChecklistItem | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [tappedItem, setTappedItem] = useState<string | null>(null);
 
   // Load/save local state
   useEffect(() => {
@@ -360,9 +361,11 @@ export default function Index() {
 
   // Long press handlers
   const handleLongPressStart = (item: ChecklistItem) => {
+    setTappedItem(item.id);
     const timer = setTimeout(() => {
       setItemToMove(item);
       setShowCategoryModal(true);
+      setTappedItem(null);
     }, 500); // 500ms long press
     setLongPressTimer(timer);
   };
@@ -372,6 +375,7 @@ export default function Index() {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+    setTappedItem(null);
   };
 
   // Move item to new category
@@ -400,7 +404,7 @@ export default function Index() {
           </div>
 
           {/* Checklist */}
-          <div className="space-y-6 pb-20">
+          <div className="space-y-6 pb-20 no-select">
             {grouped.map(({ aisle, items }, index) => (
               <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
@@ -412,9 +416,9 @@ export default function Index() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center space-x-3 px-4 py-3 transition-colors cursor-pointer ${
+                        className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
-                        }`}
+                        } ${tappedItem === item.id ? 'bg-[hsl(var(--ripple-bg))]' : ''}`}
                         onClick={() => toggleItem(item)}
                         onTouchStart={() => handleLongPressStart(item)}
                         onTouchEnd={handleLongPressEnd}
@@ -508,21 +512,21 @@ export default function Index() {
 
           {/* Category Selection Modal */}
           <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-            <DialogContent className="bg-card border-border max-w-sm mx-auto">
-              <DialogHeader>
-                <DialogTitle className="text-foreground text-center text-lg font-semibold">
-                  Move item to
+            <DialogContent className="bg-white border-0 max-w-sm mx-auto rounded-2xl p-6 shadow-xl">
+              <DialogHeader className="pb-4">
+                <DialogTitle className="text-black text-left text-lg font-semibold leading-tight">
+                  Move {itemToMove?.name} to
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-2 py-4 max-h-96 overflow-y-auto">
+              <div className="space-y-1 max-h-80 overflow-y-auto">
                 {DEFAULT_AISLES.map((aisle) => (
                   <button
                     key={aisle}
                     onClick={() => moveItemToCategory(aisle)}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors flex items-center gap-3"
+                    className="w-full text-left px-0 py-3 hover:bg-gray-50 transition-colors flex items-center gap-4 border-b border-gray-100 last:border-b-0"
                   >
-                    <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                    <span className="text-sm font-medium text-foreground">{aisle}</span>
+                    <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0"></div>
+                    <span className="text-sm font-medium text-black">{aisle}</span>
                   </button>
                 ))}
               </div>

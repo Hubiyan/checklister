@@ -76,6 +76,9 @@ All colors MUST be HSL.
     --checked-bg: 120 100% 31%;
     --separator: 0 0% 89.8%;
     --category-border: 30 2% 90%;
+    
+    /* Ripple animation colors */
+    --ripple-bg: 0 0% 85%;
   }
 }
 
@@ -87,4 +90,33 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Ripple animation styles */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-animation {
+  position: absolute;
+  border-radius: 50%;
+  background-color: hsl(var(--ripple-bg));
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+/* Disable text selection on checklist */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
