@@ -379,7 +379,7 @@ export default function Index() {
     return (
       <main className="min-h-screen bg-background text-foreground">
         {showConfetti && <Confetti recycle={false} gravity={0.3} />}
-        <div className="max-w-sm mx-auto px-4 py-16 space-y-6">
+        <div className="max-w-sm mx-auto px-4 space-y-6" style={{ paddingTop: totalAmount > 0 ? '80px' : '64px', paddingBottom: '64px' }}>
           {/* Warning Banner */}
           <div className="bg-muted/50 border border-border rounded-lg p-3 flex items-center gap-3">
             <AlertTriangle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -428,7 +428,7 @@ export default function Index() {
           </div>
 
           {/* Fixed Header with Total Amount */}
-          <div className="fixed top-0 left-0 right-0 z-50">
+          <div className="fixed inset-x-0 top-0 z-50" style={{ margin: 0, top: 0 }}>
             <div className="bg-white w-full">
               {totalAmount > 0 && (
                 <div className="flex justify-between items-center text-black px-4 py-4">
