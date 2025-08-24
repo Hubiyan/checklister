@@ -38,7 +38,7 @@ All colors MUST be HSL.
     --sidebar-ring: 140 100% 20%;
     
     /* Custom colors for shopping list */
-    --checked-bg: 140 100% 20%;
+    --checked-bg: 120 100% 31%;
     --separator: 0 0% 89.8%;
     --category-border: 30 2% 90%;
   }
@@ -73,7 +73,7 @@ All colors MUST be HSL.
     --sidebar-ring: 140 100% 20%;
     
     /* Custom colors for shopping list */
-    --checked-bg: 140 100% 20%;
+    --checked-bg: 120 100% 31%;
     --separator: 0 0% 89.8%;
     --category-border: 30 2% 90%;
   }
