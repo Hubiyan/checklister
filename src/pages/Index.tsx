@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Confetti from 'react-confetti';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -110,6 +111,7 @@ export default function Index() {
   const [showAmountModal, setShowAmountModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const [amountInput, setAmountInput] = useState("");
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Load/save local state
   useEffect(() => {
@@ -265,6 +267,24 @@ export default function Index() {
       .reduce((sum, item) => sum + (item.amount || 0), 0);
   }, [items]);
 
+  const checkedItemsCount = useMemo(() => {
+    return items.filter(item => item.checked).length;
+  }, [items]);
+
+  const progressPercentage = useMemo(() => {
+    if (items.length === 0) return 0;
+    return (checkedItemsCount / items.length) * 100;
+  }, [checkedItemsCount, items.length]);
+
+  // Show confetti when all items are checked
+  useEffect(() => {
+    if (items.length > 0 && checkedItemsCount === items.length) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [checkedItemsCount, items.length]);
+
   const handleNewList = () => {
     setShowClearDialog(true);
   };
@@ -296,7 +316,8 @@ export default function Index() {
   if (screen === "output") {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        <div className="max-w-sm mx-auto px-4 py-6 space-y-6">
+        {showConfetti && <Confetti />}
+        <div className="max-w-sm mx-auto px-4 py-16 space-y-6">
           {/* Warning Banner */}
           <div className="bg-muted/50 border border-border rounded-lg p-3 flex items-center gap-3">
             <AlertTriangle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -308,7 +329,7 @@ export default function Index() {
             {grouped.map(({ aisle, items }, index) => (
               <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
-                  <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white">
+                  <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white border-b-[0.5px] border-[#D5D5D5]">
                     {aisle}
                     <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                   </h2>
@@ -316,7 +337,7 @@ export default function Index() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center space-x-3 px-4 py-3 transition-colors cursor-pointer border-t border-gray-100 first:border-t-0 ${
+                        className={`flex items-center space-x-3 px-4 py-3 transition-colors cursor-pointer ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
                         }`}
                         onClick={() => toggleItem(item)}
@@ -344,15 +365,22 @@ export default function Index() {
             ))}
           </div>
 
-          {/* Fixed Footer with Total Amount */}
-          <div className="fixed bottom-0 left-4 right-4">
-            <div className="bg-card border border-border p-4 rounded-[0.75rem]">
+          {/* Fixed Header with Total Amount */}
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <div className="bg-white p-4">
               {totalAmount > 0 && (
-                <div className="flex justify-between items-center text-foreground">
+                <div className="flex justify-between items-center text-black">
                   <span className="text-lg font-medium">Total:</span>
                   <span className="text-xl font-bold">AED {totalAmount.toFixed(2)}</span>
                 </div>
               )}
+            </div>
+            {/* Progress Bar */}
+            <div className="w-full h-[2px] bg-[#D5D5D5]">
+              <div 
+                className="h-full bg-[#D5D5D5] transition-all duration-300 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              />
             </div>
           </div>
 
