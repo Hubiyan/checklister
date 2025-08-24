@@ -9,11 +9,11 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 0%;
     --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
@@ -24,31 +24,32 @@ All colors MUST be HSL.
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
     --ring: 142 76% 36%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 45%;
     --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 0 0% 89.8%;
     --sidebar-ring: 142 76% 36%;
     
     /* Custom colors for shopping list */
     --checked-bg: 142 76% 36%;
-    --separator: 0 0% 90%;
+    --separator: 0 0% 89.8%;
+    --category-border: 0 0% 89.8%;
   }
 
   .dark {
     --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 0%;
     --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
@@ -59,8 +60,8 @@ All colors MUST be HSL.
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
     --ring: 142 76% 36%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 45%;
@@ -68,12 +69,13 @@ All colors MUST be HSL.
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 0 0% 89.8%;
     --sidebar-ring: 142 76% 36%;
     
     /* Custom colors for shopping list */
     --checked-bg: 142 76% 36%;
-    --separator: 0 0% 90%;
+    --separator: 0 0% 89.8%;
+    --category-border: 0 0% 89.8%;
   }
 }
 

@@ -289,13 +289,15 @@ export default function Index() {
           {/* Checklist */}
           <div className="space-y-6 pb-20">
             {grouped.map(({ aisle, items }, index) => (
-              <section key={aisle}>
-                {index > 0 && (
-                  <Separator className="mb-6 bg-[hsl(var(--separator))] h-[0.5px]" />
-                )}
-                <div className="space-y-2">
-                  <h2 className="text-base font-medium text-foreground">{aisle}</h2>
-                  <div className="space-y-0 mt-2">
+              <section key={aisle} className="bg-white border border-[hsl(var(--category-border))] rounded-lg p-4">
+                <div className="space-y-0">
+                  <h2 className="text-base font-bold text-black mb-2 flex items-center gap-2">
+                    {aisle}
+                    <span className="text-xs bg-gray-900 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                      {items.length}
+                    </span>
+                  </h2>
+                  <div className="space-y-0">
                     {items.map((item) => (
                       <div
                         key={item.id}
@@ -308,14 +310,14 @@ export default function Index() {
                           <Checkbox checked={item.checked} />
                         </div>
                         <span
-                          className={`flex-1 text-sm ${
-                            item.checked ? 'line-through text-muted-foreground' : 'text-foreground'
+                          className={`flex-1 text-sm font-medium ${
+                            item.checked ? 'line-through text-white' : 'text-black'
                           }`}
                         >
                           {item.name}
                         </span>
                         {item.checked && item.amount && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-white">
                             AED {item.amount.toFixed(2)}
                           </span>
                         )}
