@@ -625,10 +625,10 @@ export default function Index() {
 
           {/* Unrecognized Items Modal */}
           <Dialog open={showUnrecognizedModal} onOpenChange={setShowUnrecognizedModal}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
-              <DialogHeader className="pb-2">
-                <DialogTitle className="text-lg font-semibold text-black text-left flex items-center gap-2">
-                  <span className="text-red-500">❓</span>
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
+              <DialogHeader className="px-4 py-3 border-b-[0.5px] border-[#D5D5D5]">
+                <DialogTitle className="text-base font-bold text-black text-left flex items-center gap-2">
+                  <span className="text-lg">❓</span>
                   Unrecognized
                 </DialogTitle>
               </DialogHeader>
@@ -636,51 +636,52 @@ export default function Index() {
                 {items.filter(item => item.aisle === "Unrecognized").map((item) => (
                   <div
                     key={item.id}
-                    className={`flex items-center justify-between p-4 transition-colors border-b border-gray-100 last:border-b-0 ${
-                      selectedUnrecognizedItems.has(item.id) ? 'bg-green-100' : 'hover:bg-gray-50'
+                    className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative ${
+                      selectedUnrecognizedItems.has(item.id) ? 'bg-[#E8F5E8]' : 'bg-white hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleUnrecognizedItemSelection(item.id)}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          selectedUnrecognizedItems.has(item.id) 
-                            ? 'bg-green-500 border-green-500' 
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        {selectedUnrecognizedItems.has(item.id) && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </button>
-                      <span className="text-base font-medium text-black">{item.name}</span>
+                    <div className="flex-shrink-0">
+                      <Checkbox 
+                        checked={selectedUnrecognizedItems.has(item.id)}
+                        onCheckedChange={() => toggleUnrecognizedItemSelection(item.id)}
+                      />
                     </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-sm font-medium text-black">
+                        {item.name}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setItems(prev => prev.filter(i => i.id !== item.id));
+                        toast.success(`Deleted "${item.name}"`);
+                        
+                        // Close modal if no more unrecognized items
+                        const remainingUnrecognized = items.filter(i => 
+                          i.aisle === "Unrecognized" && i.id !== item.id
+                        );
+                        if (remainingUnrecognized.length === 0) {
+                          setShowUnrecognizedModal(false);
+                        }
+                      }}
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <button
-                  onClick={deleteSelectedItems}
-                  disabled={selectedUnrecognizedItems.size === 0}
-                  className={`p-3 rounded-lg ${
-                    selectedUnrecognizedItems.size > 0 
-                      ? 'bg-red-500 hover:bg-red-600' 
-                      : 'bg-gray-200'
-                  } transition-colors`}
-                >
-                  <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-white' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+              <div className="px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
                 <button
                   onClick={() => setShowMoveToModal(true)}
                   disabled={selectedUnrecognizedItems.size === 0}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
                     selectedUnrecognizedItems.size > 0 
-                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                      : 'bg-gray-200 text-gray-400'
+                      ? 'bg-[#E8F5E8] text-[#006428] border border-[#E8F5E8] hover:bg-[#D4F4D4]' 
+                      : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
                   }`}
                 >
                   Move to
