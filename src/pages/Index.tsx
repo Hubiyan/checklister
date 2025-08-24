@@ -289,7 +289,7 @@ export default function Index() {
           {/* Checklist */}
           <div className="space-y-6 pb-20">
             {grouped.map(({ aisle, items }, index) => (
-              <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-lg p-0 shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
+              <section key={aisle} className="bg-transparent border-[0.5px] border-[hsl(var(--category-border))] rounded-lg p-0 shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
                   <h2 className="text-base font-bold text-black mb-2 flex items-center gap-2">
                     {aisle}
