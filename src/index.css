@@ -79,6 +79,12 @@ All colors MUST be HSL.
     
     /* Ripple animation colors */
     --ripple-bg: 0 0% 85%;
+    --tapped-bg: 120 50% 78%;
+    
+    /* Unrecognized chip colors */
+    --unrecognized-bg: 50 100% 85%;
+    --unrecognized-border: 45 100% 52%;
+    --unrecognized-text: 58 100% 18%;
   }
 }
 
@@ -110,6 +116,35 @@ All colors MUST be HSL.
   background-color: hsl(var(--ripple-bg));
   animation: ripple 0.6s linear;
   pointer-events: none;
+}
+
+/* Tapped state with B0E0B0 color and ripple */
+.tapped-state {
+  background-color: hsl(var(--tapped-bg));
+  position: relative;
+  overflow: hidden;
+}
+
+.tapped-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: hsl(var(--tapped-bg));
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* Unrecognized chip styling - exact match to Figma specs */
+.unrecognized-chip {
+  background-color: hsl(var(--unrecognized-bg));
+  border: 1px solid hsl(var(--unrecognized-border));
+  border-radius: 28px;
+  color: hsl(var(--unrecognized-text));
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 8px;
+  display: inline-block;
 }
 
 /* Disable text selection on checklist */

@@ -413,46 +413,43 @@ export default function Index() {
                      {aisle}
                    </h2>
                   <div className="space-y-0">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${
-                          item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
-                        } ${tappedItem === item.id ? 'bg-[hsl(var(--ripple-bg))]' : ''}`}
-                        onClick={() => toggleItem(item)}
-                        onTouchStart={() => handleLongPressStart(item)}
-                        onTouchEnd={handleLongPressEnd}
-                        onMouseDown={() => handleLongPressStart(item)}
-                        onMouseUp={handleLongPressEnd}
-                        onMouseLeave={handleLongPressEnd}
-                      >
-                        <div className="flex-shrink-0">
-                          <Checkbox checked={item.checked} />
-                        </div>
-                        <div className="flex-1 flex items-center gap-2">
-                          <span
-                            className={`text-sm font-medium ${
-                              item.checked ? 'line-through text-white' : 'text-black'
-                            }`}
-                          >
-                            {item.name}
-                          </span>
-                          {isUnrecognized(item.aisle) && (
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs font-semibold bg-[#5C5600] text-white border-[#5C5600] hover:bg-[#5C5600]/80"
-                            >
-                              Unrecognized
-                            </Badge>
-                          )}
-                        </div>
-                        {item.checked && item.amount && (
-                          <span className="text-sm text-white">
-                            AED {item.amount.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                     {items.map((item) => (
+                       <div
+                         key={item.id}
+                         className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${
+                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
+                         } ${tappedItem === item.id ? 'tapped-state' : ''}`}
+                         onClick={() => toggleItem(item)}
+                         onTouchStart={() => handleLongPressStart(item)}
+                         onTouchEnd={handleLongPressEnd}
+                         onMouseDown={() => handleLongPressStart(item)}
+                         onMouseUp={handleLongPressEnd}
+                         onMouseLeave={handleLongPressEnd}
+                       >
+                         <div className="flex-shrink-0">
+                           <Checkbox checked={item.checked} />
+                         </div>
+                         <div className="flex-1 flex items-center gap-2">
+                           <span
+                             className={`text-sm font-medium ${
+                               item.checked ? 'line-through text-white' : 'text-black'
+                             }`}
+                           >
+                             {item.name}
+                           </span>
+                           {isUnrecognized(item.aisle) && (
+                             <span className="unrecognized-chip">
+                               unrecognized
+                             </span>
+                           )}
+                         </div>
+                         {item.checked && item.amount && (
+                           <span className="text-sm text-white">
+                             AED {item.amount.toFixed(2)}
+                           </span>
+                         )}
+                       </div>
+                     ))}
                   </div>
                 </div>
               </section>
