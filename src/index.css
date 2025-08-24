@@ -8,38 +8,38 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 120 12% 8%;
-    --foreground: 0 0% 100%;
-    --card: 120 22% 12%;
-    --card-foreground: 0 0% 100%;
-    --popover: 210 24% 12%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 120 12% 8%;
-    --secondary: 210 16% 20%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 210 16% 20%;
-    --muted-foreground: 0 0% 63%;
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 18% 22%;
-    --input: 120 18% 22%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
     --ring: 142 76% 36%;
     --radius: 0.75rem;
-    --sidebar-background: 210 24% 9%;
-    --sidebar-foreground: 0 0% 63%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 210 24% 9%;
-    --sidebar-accent: 210 16% 20%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 16% 20%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 45%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 90%;
     --sidebar-ring: 142 76% 36%;
     
     /* Custom colors for shopping list */
-    --checked-bg: 111 100% 15%;
-    --separator: 0 0% 38%;
+    --checked-bg: 142 76% 36%;
+    --separator: 0 0% 90%;
   }
 
   .dark {
