@@ -711,9 +711,9 @@ export default function Index() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                        <span className="text-base font-medium text-black">{aisle}</span>
+                        <span className="text-base font-medium text-[#006428]">{aisle}</span>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
+                      <ArrowRight className="h-5 w-5 text-[#006428]" />
                     </button>
                   ))}
                 </div>
