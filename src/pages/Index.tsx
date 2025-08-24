@@ -638,7 +638,7 @@ export default function Index() {
                     key={item.id}
                     onClick={() => toggleUnrecognizedItemSelection(item.id)}
                     className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${
-                      selectedUnrecognizedItems.has(item.id) ? 'bg-[#E8F5E8]' : 'bg-white hover:bg-gray-50'
+                      selectedUnrecognizedItems.has(item.id) ? 'bg-[#009C00]' : 'bg-white hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex-shrink-0">
@@ -648,7 +648,9 @@ export default function Index() {
                       />
                     </div>
                     <div className="flex-1 flex items-center gap-2">
-                      <span className="text-sm font-medium text-black">
+                      <span className={`text-sm font-medium ${
+                        selectedUnrecognizedItems.has(item.id) ? 'text-[#FFFFFF]' : 'text-black'
+                      }`}>
                         {item.name}
                       </span>
                     </div>
