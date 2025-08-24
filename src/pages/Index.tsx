@@ -299,7 +299,7 @@ export default function Index() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
+                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer rounded-lg ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-transparent'
                         }`}
                         onClick={() => toggleItem(item)}
@@ -309,13 +309,13 @@ export default function Index() {
                         </div>
                         <span
                           className={`flex-1 text-sm ${
-                            item.checked ? 'line-through text-white/70' : 'text-white'
+                            item.checked ? 'line-through text-muted-foreground' : 'text-foreground'
                           }`}
                         >
                           {item.name}
                         </span>
                         {item.checked && item.amount && (
-                          <span className="text-sm text-white/70">
+                          <span className="text-sm text-muted-foreground">
                             AED {item.amount.toFixed(2)}
                           </span>
                         )}
@@ -327,40 +327,15 @@ export default function Index() {
             ))}
           </div>
 
-          {/* Fixed Footer with Total and New List Button */}
+          {/* Fixed Footer with Total Amount */}
           <div className="fixed bottom-0 left-4 right-4">
-            <div className="bg-[#121712] p-4 rounded-[0.75rem] space-y-4">
+            <div className="bg-card border border-border p-4 rounded-[0.75rem]">
               {totalAmount > 0 && (
-                <div className="flex justify-between items-center text-white">
+                <div className="flex justify-between items-center text-foreground">
                   <span className="text-lg font-medium">Total:</span>
                   <span className="text-xl font-bold">AED {totalAmount.toFixed(2)}</span>
                 </div>
               )}
-              <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    onClick={handleNewList}
-                    className="w-full py-4 h-auto text-lg font-semibold"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    New
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-card border-border">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-foreground">Clear Shopping List</AlertDialogTitle>
-                    <AlertDialogDescription className="text-muted-foreground">
-                      Are you sure you want to clear your current shopping list? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="text-foreground">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={confirmNewList}>
-                      Clear List
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
 
