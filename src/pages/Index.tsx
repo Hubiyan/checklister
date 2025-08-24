@@ -557,18 +557,18 @@ export default function Index() {
           {/* Category Selection Modal (for long press) */}
           <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="pb-2">
-                <DialogTitle className="text-lg font-semibold text-black text-left">
+              <DialogHeader className="py-3">
+                <DialogTitle className="text-base font-bold text-black">
                   Move {itemToMove?.name} to
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-0">
-                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+              <div className="space-y-0 max-h-96 overflow-y-auto">
+                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                      <span className="text-base font-medium text-black">{aisle}</span>
+                      <span className="text-base font-medium text-[#006428]">{aisle}</span>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                    <ArrowRight className="h-5 w-5 text-[#006428]" />
                   </button>)}
               </div>
             </DialogContent>
