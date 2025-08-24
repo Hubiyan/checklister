@@ -290,7 +290,7 @@ export default function Index() {
           <div className="space-y-6 pb-20">
             {grouped.map(({ aisle, items }, index) => (
               <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-lg p-0 shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
-                <div className="space-y-0 p-4">
+                <div className="space-y-0">
                   <h2 className="text-base font-bold text-black mb-2 flex items-center gap-2">
                     {aisle}
                     <span className="text-xs bg-gray-900 text-white rounded-full w-4 h-4 flex items-center justify-center">
