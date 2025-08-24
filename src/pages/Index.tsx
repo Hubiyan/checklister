@@ -37,6 +37,23 @@ type ChecklistItem = {
 
 const LS_KEY = "checklister-current";
 
+function getCategoryEmoji(category: string): string {
+  const emojiMap: Record<string, string> = {
+    "Produce": "🥬",
+    "Dairy": "🥛", 
+    "Bakery": "🍞",
+    "Meat & Poultry": "🥩",
+    "Frozen Food": "🧊",
+    "Rice & Grains": "🌾",
+    "Drinks & Beverages": "🥤",
+    "Cleaning & Household": "🧽",
+    "Personal Care": "🧴",
+    "Other / Miscellaneous": "🛒",
+  };
+  
+  return emojiMap[category] || "📦";
+}
+
 function parseLines(text: string): string[] {
   return text
     .split(/\r?\n|,|;/)
@@ -293,7 +310,7 @@ export default function Index() {
                 <div className="space-y-0 bg-transparent">
                   <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white">
                     {aisle}
-                    <span className="text-lg">🥬</span>
+                    <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                   </h2>
                   <div className="space-y-0">
                     {items.map((item) => (
