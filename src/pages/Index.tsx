@@ -556,7 +556,7 @@ export default function Index() {
 
           {/* Category Selection Modal (for long press) */}
           <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
               <DialogHeader className="pb-2">
                 <DialogTitle className="text-lg font-semibold text-black text-left">
                   Move {itemToMove?.name} to
