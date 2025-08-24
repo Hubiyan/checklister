@@ -146,6 +146,9 @@ export default function Index() {
   const [amountInput, setAmountInput] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [itemToMove, setItemToMove] = useState<ChecklistItem | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Load/save local state
   useEffect(() => {
@@ -355,6 +358,36 @@ export default function Index() {
     }
   };
 
+  // Long press handlers
+  const handleLongPressStart = (item: ChecklistItem) => {
+    const timer = setTimeout(() => {
+      setItemToMove(item);
+      setShowCategoryModal(true);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Move item to new category
+  const moveItemToCategory = (newAisle: string) => {
+    if (itemToMove) {
+      setItems(prev => prev.map(item => 
+        item.id === itemToMove.id 
+          ? { ...item, aisle: newAisle }
+          : item
+      ));
+      toast.success(`Moved "${itemToMove.name}" to ${newAisle}`);
+      setShowCategoryModal(false);
+      setItemToMove(null);
+    }
+  };
+
   if (screen === "output") {
     return (
       <main className="min-h-screen bg-background text-foreground">
@@ -383,6 +416,11 @@ export default function Index() {
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
                         }`}
                         onClick={() => toggleItem(item)}
+                        onTouchStart={() => handleLongPressStart(item)}
+                        onTouchEnd={handleLongPressEnd}
+                        onMouseDown={() => handleLongPressStart(item)}
+                        onMouseUp={handleLongPressEnd}
+                        onMouseLeave={handleLongPressEnd}
                       >
                         <div className="flex-shrink-0">
                           <Checkbox checked={item.checked} />
@@ -464,6 +502,29 @@ export default function Index() {
                 >
                   Save amount
                 </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Category Selection Modal */}
+          <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+            <DialogContent className="bg-card border-border max-w-sm mx-auto">
+              <DialogHeader>
+                <DialogTitle className="text-foreground text-center text-lg font-semibold">
+                  Move item to
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 py-4 max-h-96 overflow-y-auto">
+                {DEFAULT_AISLES.map((aisle) => (
+                  <button
+                    key={aisle}
+                    onClick={() => moveItemToCategory(aisle)}
+                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors flex items-center gap-3"
+                  >
+                    <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                    <span className="text-sm font-medium text-foreground">{aisle}</span>
+                  </button>
+                ))}
               </div>
             </DialogContent>
           </Dialog>

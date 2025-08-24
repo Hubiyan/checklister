@@ -125,32 +125,40 @@ async function fetchUrlContent(url: string): Promise<{ content: string; type: "p
 }
 
 function createSystemPrompt(): string {
-  return `Extract grocery items from the given text and organize them by supermarket aisles.
+  return `You are an intelligent grocery categorization system. Analyze each item by its ACTUAL PURPOSE, not just its name components.
 
-INSTRUCTIONS:
-1. Extract each grocery item from the text exactly as written
-2. Categorize items into these supermarket aisles:
-   - Dairy & Eggs
-   - Meat, Fish & Frozen  
-   - Vegetables & Herbs
-   - Fruits
-   - Bakery & Breads
-   - Pantry Staples
-   - Grains, Rice & Pulses
-   - Pasta & Noodles
-   - Baking & Desserts
-   - Beverages
-   - Snacks
-   - Spices & Condiments
-   - Household & Cleaning
-   - Personal Care
-   - Baby
-   - Pets
-   - Unrecognized
+CRITICAL CATEGORIZATION RULES:
+- "Mint toothpaste" → Personal Care (it's TOOTHPASTE, mint is just a flavor)
+- "Orange juice" → Beverages (it's JUICE, orange is just the flavor) 
+- "Frozen chapati" → Meat, Fish & Frozen (it's FROZEN food, not bakery)
+- "Chocolate milk" → Beverages (it's MILK/drink, not dessert)
+- "Strawberry yogurt" → Dairy & Eggs (it's YOGURT, strawberry is flavor)
 
-3. If you cannot clearly identify which aisle an item belongs to, put it in "Unrecognized"
-4. Keep the original text exactly as written
-5. Ignore non-food items like URLs, bullets, or meaningless text
+SUPERMARKET AISLES:
+- Dairy & Eggs: milk, yogurt, cheese, butter, eggs, cream, paneer, labneh
+- Meat, Fish & Frozen: fresh/frozen meat, fish, poultry, ALL frozen items (frozen bread, frozen vegetables, etc.)
+- Vegetables & Herbs: fresh vegetables, herbs, salads (NOT frozen vegetables)
+- Fruits: fresh and dried whole fruits (NOT fruit juices or flavored products)
+- Bakery & Breads: fresh bread, buns, pastries (NOT frozen bread)
+- Pantry Staples: oils, vinegars, sauces, condiments, canned goods, jams, honey, peanut butter
+- Grains, Rice & Pulses: rice, flour, cereals, oats, beans, lentils, quinoa
+- Pasta & Noodles: all types of pasta and noodles
+- Baking & Desserts: baking powder, cocoa powder, vanilla, baking chocolate, sugar
+- Beverages: ALL drinks - juices, sodas, coffee, tea, energy drinks, coconut water
+- Snacks: chips, nuts, crackers, granola bars, popcorn, cookies
+- Spices & Condiments: spices, seasonings, salt, pepper, curry powders
+- Household & Cleaning: detergents, soaps, cleaning supplies, paper products
+- Personal Care: toothpaste, shampoo, body wash, skincare, deodorant
+- Baby: diapers, baby food, baby care products
+- Pets: pet food, pet supplies
+- Unrecognized: items you cannot clearly categorize
+
+ANALYSIS APPROACH:
+1. Identify the PRIMARY product (what is the main item?)
+2. Ignore descriptive adjectives (flavors, colors, brands)  
+3. Consider the physical form and typical supermarket location
+4. If frozen is mentioned, prioritize "Meat, Fish & Frozen"
+5. If you're unsure, use "Unrecognized"
 
 OUTPUT FORMAT (JSON only):
 {
