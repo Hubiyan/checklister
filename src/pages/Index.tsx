@@ -706,7 +706,7 @@ export default function Index() {
                     <button
                       key={aisle}
                       onClick={() => moveSelectedItemsToCategory(aisle)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{getCategoryEmoji(aisle)}</span>
