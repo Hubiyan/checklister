@@ -174,6 +174,7 @@ export default function Index() {
   const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
 
   // Load/save local state
   useEffect(() => {
@@ -342,7 +343,8 @@ export default function Index() {
   useEffect(() => {
     if (items.length > 0 && checkedItemsCount === items.length) {
       setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 2000);
+      setShowCongratulationsModal(true);
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [checkedItemsCount, items.length]);
@@ -391,10 +393,10 @@ export default function Index() {
             {grouped.map(({ aisle, items }, index) => (
               <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
-                  <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white border-b-[0.5px] border-[#D5D5D5]">
-                    {aisle}
-                    <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                  </h2>
+                   <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white border-b-[0.5px] border-[#D5D5D5]">
+                     <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                     {aisle}
+                   </h2>
                   <div className="space-y-0">
                     {items.map((item) => (
                       <div
@@ -473,6 +475,28 @@ export default function Index() {
                   disabled={!amountInput.trim()}
                 >
                   Save amount
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Congratulations Modal */}
+          <Dialog open={showCongratulationsModal} onOpenChange={setShowCongratulationsModal}>
+            <DialogContent className="bg-card border-border max-w-sm mx-auto">
+              <DialogHeader>
+                <DialogTitle className="text-foreground text-center text-xl font-bold">
+                  Congratulations
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 py-6">
+                <p className="text-center text-muted-foreground">
+                  You have gotten all your groceries. Now you can go home without worrying that you will be scolded for missing something!
+                </p>
+                <Button 
+                  onClick={() => setShowCongratulationsModal(false)}
+                  className="w-full py-3 text-lg font-semibold"
+                >
+                  Alright
                 </Button>
               </div>
             </DialogContent>
