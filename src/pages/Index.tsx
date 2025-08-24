@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 
-// New taxonomy in correct order
+// Aisle categories in correct order
 const DEFAULT_AISLES = [
   "Dairy & Eggs",
   "Meat, Fish & Frozen", 
@@ -31,7 +31,7 @@ const DEFAULT_AISLES = [
   "Personal Care",
   "Baby",
   "Pets",
-  "Other / Misc"
+  "Unrecognized"
 ] as const;
 
 type Aisle = (typeof DEFAULT_AISLES)[number];
@@ -64,44 +64,10 @@ function getCategoryEmoji(category: string): string {
     "Personal Care": "🧴",
     "Baby": "👶",
     "Pets": "🐕",
-    "Other / Misc": "🛒",
-    // Legacy mappings for backward compatibility
-    "Fruits & Vegetables": "🥬",
-    "Bakery": "🍞",
-    "Meat & Poultry": "🥩",
-    "Seafood": "🦐",
-    "Frozen Food": "🧊",
-    "Rice & Grains": "🌾",
-    "Pasta, Noodles & Tomato Products": "🍝",
-    "Canned & Jarred Food": "🥫",
-    "Sauces, Oils & Condiments": "🍯",
-    "Spices & Masalas": "🌶️",
-    "Baking Supplies": "🧁",
-    "Tea, Coffee & Hot Drinks": "☕",
-    "Breakfast & Spreads": "🥣",
-    "Snacks & Confectionery": "🍿",
-    "Drinks & Beverages": "🥤",
-    "Cleaning & Household": "🧽",
-    "Baby Products": "👶",
-    "Pet Products": "🐕",
-    "Other / Miscellaneous": "🛒",
+    "Unrecognized": "❓"
   };
   
-  // Direct match
-  if (emojiMap[category]) {
-    return emojiMap[category];
-  }
-  
-  // Fuzzy matching for partial matches
-  const categoryLower = category.toLowerCase();
-  for (const [key, emoji] of Object.entries(emojiMap)) {
-    if (categoryLower.includes(key.toLowerCase()) || key.toLowerCase().includes(categoryLower)) {
-      return emoji;
-    }
-  }
-  
-  // Default fallback
-  return "🛒";
+  return emojiMap[category] || "🛒";
 }
 
 function parseLines(text: string): string[] {
@@ -198,9 +164,9 @@ export default function Index() {
     } catch {}
   }, [items]);
 
-  // Function to check if an item is unrecognized (not in main categories)
+  // Function to check if an item is in the Unrecognized category
   const isUnrecognized = (aisle: string) => {
-    return !DEFAULT_AISLES.includes(aisle as Aisle);
+    return aisle === "Unrecognized";
   };
 
   const grouped = useMemo(() => {
@@ -218,18 +184,7 @@ export default function Index() {
         .sort(),
     ];
     
-    return orderedKeys.map((k) => { 
-      let items = map.get(k)!;
-      
-      // For Other / Misc, put unrecognized items at the bottom
-      if (k === "Other / Misc") {
-        const recognizedItems = items.filter(item => !isUnrecognized(item.aisle));
-        const unrecognizedItems = items.filter(item => isUnrecognized(item.aisle));
-        items = [...recognizedItems, ...unrecognizedItems];
-      }
-      
-      return { aisle: k, items };
-    });
+    return orderedKeys.map((k) => ({ aisle: k, items: map.get(k)! }));
   }, [items]);
 
   const categorize = useCallback(async (rawItems: string[], urls: string[] = []) => {
