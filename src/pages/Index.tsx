@@ -636,7 +636,8 @@ export default function Index() {
                 {items.filter(item => item.aisle === "Unrecognized").map((item) => (
                   <div
                     key={item.id}
-                    className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative ${
+                    onClick={() => toggleUnrecognizedItemSelection(item.id)}
+                    className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${
                       selectedUnrecognizedItems.has(item.id) ? 'bg-[#E8F5E8]' : 'bg-white hover:bg-gray-50'
                     }`}
                   >
