@@ -339,9 +339,9 @@ export default function Index() {
     return (checkedItemsCount / items.length) * 100;
   }, [checkedItemsCount, items.length]);
 
-  // Show confetti when all items are checked
+  // Show confetti when all items are checked (only for lists with multiple items)
   useEffect(() => {
-    if (items.length > 0 && checkedItemsCount === items.length) {
+    if (items.length > 1 && checkedItemsCount === items.length) {
       setShowConfetti(true);
       setShowCongratulationsModal(true);
       const timer = setTimeout(() => setShowConfetti(false), 3000);
