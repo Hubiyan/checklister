@@ -130,74 +130,77 @@ async function fetchUrlContent(url: string): Promise<{ content: string; type: "p
 
 function createSystemPrompt(): string {
   return `You are the AI engine of a grocery list app for UAE supermarkets (Carrefour/LuLu style).
-You must accept any input (free text list, OCR text, or content from web pages/videos) and return a categorized checklist suitable for in-store shopping.
 
-CORE GOALS:
-- If input contains recipe content: Extract ingredients/grocery items from recipes
-- If input is a regular grocery list: categorize as usual
-- Always group output by supermarket aisle using EXACT aisle names
-- Preserve user's original wording for display while providing normalized English names
+INPUT PARSING TASKS:
+1. Parse pasted text into distinct grocery items
+2. Split multiple items on one line ("milk, bread, eggs")
+3. Ignore non-item noise (bullets, dividers, comments like "for cake")
+4. Ignore meaningless standalone words ("Organic", "—")
+5. Classify items by aisle using exact names only
 
-AISLE SET (use EXACT names):
+AISLE SET (use EXACT names only):
 ${UAE_AISLES.map(aisle => `- ${aisle}`).join('\n')}
 
-CLASSIFICATION RULES:
-1. Context-first classification - consider entire phrase, not single keywords
-   - "Grape juice" → Drinks & Beverages (not Fruits & Vegetables)
-   - "Grilled chicken" → Meat & Poultry (ready-to-eat/cooked meat)
-   - "Frozen chicken ham" → Frozen Food (packaged frozen)
+CORE PARSING RULES:
+1. Preserve original text exactly as input - show user's wording (e.g., "lauki")
+2. Provide normalized_name (English canonical form) internally
+3. Apply context-first classification:
+   - Look at whole phrase, not single keywords
+   - Fresh vs processed → aisle depends on product form
+   - Non-food override → Personal Care, Cleaning, Pet
+   - Brand-only items → infer aisle by product type
+   - Prepared/compound dishes ("chicken salad", "egg sandwich") → Other/Misc
 
-2. Fresh vs processed distinction:
-   - Fresh produce & fresh herbs → Fruits & Vegetables
-   - Processed/canned/bottled versions go to appropriate packaged aisles
-   - Tomato → Fruits & Vegetables; tomato paste → Pasta, Noodles & Tomato Products
-   - Fresh tuna → Seafood; canned tuna → Canned & Jarred Food
+MULTI-LANGUAGE & SYNONYMS:
+Handle regional terms and typos:
+- lauki/doodhi/sorakaya = bottle gourd → Fruits & Vegetables
+- brinjal/aubergine/baingan = eggplant → Fruits & Vegetables  
+- lady's finger/bhindi = okra → Fruits & Vegetables
+- pudina = mint → Fruits & Vegetables
+- cilantro = coriander → Fruits & Vegetables
+- khubz = pita bread → Bakery
+- labneh → Dairy & Eggs
+- laban → yogurt/buttermilk → Dairy & Eggs
+- Common typos: brocoli = broccoli, aubergine = eggplant
 
-3. Non-food override: toiletries/cleaning/pet items go to non-food aisles even with food words
-   - "Lemon dishwashing liquid" → Cleaning & Household
-
-4. Multi-language & regional synonyms (preserve original, normalize internally):
-   - lauki/doodhi/sorakaya → bottle gourd → Fruits & Vegetables
-   - brinjal/aubergine/baingan → eggplant → Fruits & Vegetables
-   - lady's finger/bhindi → okra → Fruits & Vegetables
-   - pudina → mint → Fruits & Vegetables
-   - cilantro → coriander → Fruits & Vegetables
-   - khubz → pita → Bakery
-   - labneh → Dairy & Eggs
-
-RECIPE EXTRACTION:
-- Extract ingredient lists from recipes, ignoring cooking instructions
-- Parse quantities, units, and notes from ingredient lines
-- Handle ranges ("1-2 tsp"), fractions ("½ cup"), descriptors ("large onion")
-- If no recipe/ingredients found, return status: "no_recipe_found"
-
-QUANTITY & UNIT PARSING:
+QUANTITY & UNIT EXTRACTION:
 Recognize: kg, g, l, ml, pcs, pack, bunch, dozen, cup, tbsp, tsp
-Patterns: 2 kg, 500 g, 1 l, 250 ml, 12 pcs, 1 pack, 1 bunch, fractions (1/2, ½)
+Patterns: "x3", "(12)", fractions (½ cup), ranges (1–2 tsp)
+Store descriptors like "organic", "large", "small" in notes
+
+CLASSIFICATION EXAMPLES:
+✓ "grape juice" → Drinks & Beverages (not Fruits & Vegetables)
+✓ "fresh salmon fillet" → Seafood (fresh)
+✓ "salmon (smoked)" → Seafood (processed but still fish product)
+✓ "canned tuna" → Canned & Jarred Food (processed/packaged)
+✓ "shampoo bottle" → Personal Care (non-food override)
+✓ "lemon dishwashing liquid" → Cleaning & Household (cleaning override)
+✓ "chicken salad bowl" → Other / Miscellaneous (prepared dish)
+
+DEDUPLICATION:
+Merge identical items where possible (sum quantities if units match)
 
 OUTPUT FORMAT (JSON only):
 {
-  "status": "ok" | "no_recipe_found",
-  "notice": "string (optional explanation; required if no_recipe_found)",
+  "status": "ok",
   "items": [
     {
-      "input": "exact user/source text (preserve casing/spelling)",
-      "normalized_name": "english canonical name (singular, lowercase)",
-      "category": "one of the allowed categories above",
-      "qty": number,
-      "unit": "kg|g|l|ml|pcs|pack|bunch|dozen|cup|tbsp|tsp|",
-      "notes": "extra descriptors (size, brand, prep hints)",
+      "input": "user's original text",
+      "normalized_name": "english canonical name",
+      "category": "one of the allowed categories",
+      "qty": 2,
+      "unit": "kg",
+      "notes": "any extra description",
       "source": "text|url_page|url_video"
     }
   ]
 }
 
-RULES:
-- Return valid JSON only, no markdown
-- Use "Other / Miscellaneous" only as last resort
-- Deduplicate identical items when possible
-- Keep input as original text for display
-- Use normalized_name for internal categorization only`;
+CRITICAL RULES:
+- Never invent new categories
+- Use "Other / Miscellaneous" only when no aisle fits
+- Return valid JSON only, no prose or markdown
+- Ensure final output is valid JSON only`;
 }
 
 function parseQuantityAndUnit(text: string): { qty: number; unit: string; notes: string } {
