@@ -13,29 +13,25 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 
-// Aisle list in the exact order specified by user
+// New taxonomy in correct order
 const DEFAULT_AISLES = [
-  "Fruits & Vegetables",
-  "Bakery",
   "Dairy & Eggs",
-  "Meat & Poultry",
-  "Seafood",
-  "Frozen Food",
-  "Rice & Grains",
-  "Pasta, Noodles & Tomato Products",
-  "Canned & Jarred Food",
-  "Sauces, Oils & Condiments",
-  "Spices & Masalas",
-  "Baking Supplies",
-  "Tea, Coffee & Hot Drinks",
-  "Breakfast & Spreads",
-  "Snacks & Confectionery",
-  "Drinks & Beverages",
-  "Cleaning & Household",
+  "Meat, Fish & Frozen", 
+  "Vegetables & Herbs",
+  "Fruits",
+  "Bakery & Breads",
+  "Pantry Staples",
+  "Grains, Rice & Pulses",
+  "Pasta & Noodles",
+  "Baking & Desserts",
+  "Beverages",
+  "Snacks",
+  "Spices & Condiments",
+  "Household & Cleaning",
   "Personal Care",
-  "Baby Products",
-  "Pet Products",
-  "Other / Miscellaneous",
+  "Baby",
+  "Pets",
+  "Other / Misc"
 ] as const;
 
 type Aisle = (typeof DEFAULT_AISLES)[number];
@@ -52,9 +48,26 @@ const LS_KEY = "checklister-current";
 
 function getCategoryEmoji(category: string): string {
   const emojiMap: Record<string, string> = {
+    "Dairy & Eggs": "🥛",
+    "Meat, Fish & Frozen": "🥩",
+    "Vegetables & Herbs": "🥬",
+    "Fruits": "🍎",
+    "Bakery & Breads": "🍞",
+    "Pantry Staples": "🥫",
+    "Grains, Rice & Pulses": "🌾",
+    "Pasta & Noodles": "🍝",
+    "Baking & Desserts": "🧁",
+    "Beverages": "🥤",
+    "Snacks": "🍿",
+    "Spices & Condiments": "🌶️",
+    "Household & Cleaning": "🧽",
+    "Personal Care": "🧴",
+    "Baby": "👶",
+    "Pets": "🐕",
+    "Other / Misc": "🛒",
+    // Legacy mappings for backward compatibility
     "Fruits & Vegetables": "🥬",
     "Bakery": "🍞",
-    "Dairy & Eggs": "🥛", 
     "Meat & Poultry": "🥩",
     "Seafood": "🦐",
     "Frozen Food": "🧊",
@@ -69,57 +82,9 @@ function getCategoryEmoji(category: string): string {
     "Snacks & Confectionery": "🍿",
     "Drinks & Beverages": "🥤",
     "Cleaning & Household": "🧽",
-    "Personal Care": "🧴",
     "Baby Products": "👶",
     "Pet Products": "🐕",
     "Other / Miscellaneous": "🛒",
-    // Additional comprehensive mappings (avoiding duplicates)
-    "Fruits": "🍎",
-    "Vegetables": "🥕",
-    "Meat": "🥩",
-    "Poultry": "🍗",
-    "Fish": "🐟",
-    "Milk": "🥛",
-    "Cheese": "🧀",
-    "Eggs": "🥚",
-    "Bread": "🍞",
-    "Pastries": "🥐",
-    "Cakes": "🎂",
-    "Frozen": "❄️",
-    "Ice Cream": "🍦",
-    "Cereals": "🥣",
-    "Pasta": "🍝",
-    "Spices": "🌶️",
-    "Condiments": "🍯",
-    "Snacks": "🍿",
-    "Candy": "🍭",
-    "Beverages": "🥤",
-    "Coffee": "☕",
-    "Tea": "🍵",
-    "Alcohol": "🍷",
-    "Water": "💧",
-    "Juice": "🧃",
-    "Soda": "🥤",
-    "Energy Drinks": "⚡",
-    "Cleaning": "🧽",
-    "Detergent": "🧴",
-    "Paper Products": "🧻",
-    "Toiletries": "🚿",
-    "Cosmetics": "💄",
-    "Medicine": "💊",
-    "Health": "🏥",
-    "Baby": "👶",
-    "Pet": "🐕",
-    "Electronics": "📱",
-    "Stationery": "📝",
-    "Tools": "🔧",
-    "Garden": "🌱",
-    "Automotive": "🚗",
-    "Sports": "⚽",
-    "Books": "📚",
-    "Toys": "🧸",
-    "Clothing": "👕",
-    "Shoes": "👟"
   };
   
   // Direct match
@@ -149,12 +114,30 @@ function parseLines(text: string): string[] {
 }
 
 function itemsFromAislesJson(json: any): ChecklistItem[] {
-  // Handle new JSON format with items array
+  // Handle new categories format
+  if (Array.isArray(json?.categories)) {
+    const items: ChecklistItem[] = [];
+    json.categories.forEach((category: any) => {
+      if (category.items && Array.isArray(category.items)) {
+        category.items.forEach((item: any) => {
+          items.push({
+            id: crypto.randomUUID(),
+            name: item.display_name || item.name || "",
+            aisle: category.name || "Other / Misc",
+            checked: false,
+          });
+        });
+      }
+    });
+    return items;
+  }
+
+  // Handle legacy items array format
   if (Array.isArray(json?.items)) {
     return json.items.map((item: any) => ({
       id: crypto.randomUUID(),
-      name: item.input || item.name || "",
-      aisle: item.category || item.aisle || "Other / Miscellaneous",
+      name: item.input || item.display_name || item.name || "",
+      aisle: item.category || item.aisle || "Other / Misc",
       checked: false,
     }));
   }
@@ -238,8 +221,8 @@ export default function Index() {
     return orderedKeys.map((k) => { 
       let items = map.get(k)!;
       
-      // For Other / Miscellaneous, put unrecognized items at the bottom
-      if (k === "Other / Miscellaneous") {
+      // For Other / Misc, put unrecognized items at the bottom
+      if (k === "Other / Misc") {
         const recognizedItems = items.filter(item => !isUnrecognized(item.aisle));
         const unrecognizedItems = items.filter(item => isUnrecognized(item.aisle));
         items = [...recognizedItems, ...unrecognizedItems];
