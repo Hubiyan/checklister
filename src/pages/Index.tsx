@@ -11,18 +11,30 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
-// Simple aisle list used for ordering - matching the design
+// Aisle list in the exact order specified by user
 const DEFAULT_AISLES = [
-  "Produce",
-  "Dairy", 
+  "Fruits & Vegetables",
   "Bakery",
+  "Dairy & Eggs",
   "Meat & Poultry",
+  "Seafood",
   "Frozen Food",
   "Rice & Grains",
+  "Pasta, Noodles & Tomato Products",
+  "Canned & Jarred Food",
+  "Sauces, Oils & Condiments",
+  "Spices & Masalas",
+  "Baking Supplies",
+  "Tea, Coffee & Hot Drinks",
+  "Breakfast & Spreads",
+  "Snacks & Confectionery",
   "Drinks & Beverages",
   "Cleaning & Household",
   "Personal Care",
+  "Baby Products",
+  "Pet Products",
   "Other / Miscellaneous",
 ] as const;
 
@@ -40,23 +52,33 @@ const LS_KEY = "checklister-current";
 
 function getCategoryEmoji(category: string): string {
   const emojiMap: Record<string, string> = {
-    "Produce": "🥬",
-    "Dairy": "🥛", 
+    "Fruits & Vegetables": "🥬",
     "Bakery": "🍞",
+    "Dairy & Eggs": "🥛", 
     "Meat & Poultry": "🥩",
+    "Seafood": "🦐",
     "Frozen Food": "🧊",
     "Rice & Grains": "🌾",
+    "Pasta, Noodles & Tomato Products": "🍝",
+    "Canned & Jarred Food": "🥫",
+    "Sauces, Oils & Condiments": "🍯",
+    "Spices & Masalas": "🌶️",
+    "Baking Supplies": "🧁",
+    "Tea, Coffee & Hot Drinks": "☕",
+    "Breakfast & Spreads": "🥣",
+    "Snacks & Confectionery": "🍿",
     "Drinks & Beverages": "🥤",
     "Cleaning & Household": "🧽",
     "Personal Care": "🧴",
+    "Baby Products": "👶",
+    "Pet Products": "🐕",
     "Other / Miscellaneous": "🛒",
-    // Additional comprehensive mappings
+    // Additional comprehensive mappings (avoiding duplicates)
     "Fruits": "🍎",
     "Vegetables": "🥕",
     "Meat": "🥩",
     "Poultry": "🍗",
     "Fish": "🐟",
-    "Seafood": "🦐",
     "Milk": "🥛",
     "Cheese": "🧀",
     "Eggs": "🥚",
@@ -193,12 +215,18 @@ export default function Index() {
     } catch {}
   }, [items]);
 
+  // Function to check if an item is unrecognized (not in main categories)
+  const isUnrecognized = (aisle: string) => {
+    return !DEFAULT_AISLES.includes(aisle as Aisle);
+  };
+
   const grouped = useMemo(() => {
     const map = new Map<string, ChecklistItem[]>();
     for (const i of items) {
       if (!map.has(i.aisle)) map.set(i.aisle, []);
       map.get(i.aisle)!.push(i);
     }
+    
     // Order aisles by DEFAULT_AISLES first, then the rest alphabetically
     const orderedKeys = [
       ...DEFAULT_AISLES.filter((a) => map.has(a)),
@@ -206,7 +234,19 @@ export default function Index() {
         .filter((k) => !DEFAULT_AISLES.includes(k as Aisle))
         .sort(),
     ];
-    return orderedKeys.map((k) => ({ aisle: k, items: map.get(k)! }));
+    
+    return orderedKeys.map((k) => { 
+      let items = map.get(k)!;
+      
+      // For Other / Miscellaneous, put unrecognized items at the bottom
+      if (k === "Other / Miscellaneous") {
+        const recognizedItems = items.filter(item => !isUnrecognized(item.aisle));
+        const unrecognizedItems = items.filter(item => isUnrecognized(item.aisle));
+        items = [...recognizedItems, ...unrecognizedItems];
+      }
+      
+      return { aisle: k, items };
+    });
   }, [items]);
 
   const categorize = useCallback(async (rawItems: string[], urls: string[] = []) => {
@@ -409,13 +449,23 @@ export default function Index() {
                         <div className="flex-shrink-0">
                           <Checkbox checked={item.checked} />
                         </div>
-                        <span
-                          className={`flex-1 text-sm font-medium ${
-                            item.checked ? 'line-through text-white' : 'text-black'
-                          }`}
-                        >
-                          {item.name}
-                        </span>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span
+                            className={`text-sm font-medium ${
+                              item.checked ? 'line-through text-white' : 'text-black'
+                            }`}
+                          >
+                            {item.name}
+                          </span>
+                          {isUnrecognized(item.aisle) && (
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs font-semibold bg-[#5C5600] text-white border-[#5C5600] hover:bg-[#5C5600]/80"
+                            >
+                              Unrecognized
+                            </Badge>
+                          )}
+                        </div>
                         {item.checked && item.amount && (
                           <span className="text-sm text-white">
                             AED {item.amount.toFixed(2)}
