@@ -453,9 +453,24 @@ export default function Index() {
             items
           }, index) => <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
-                   <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white border-b-[0.5px] border-[#D5D5D5]">
-                     <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                     {aisle}
+                   <h2 className="text-base font-bold text-black px-4 py-3 flex items-center justify-between bg-white border-b-[0.5px] border-[#D5D5D5]">
+                     <div className="flex items-center gap-2">
+                       <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                       {aisle}
+                     </div>
+                     {aisle === "Unrecognized" && (
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setShowUnrecognizedModal(true);
+                         }}
+                         className="h-7 px-2 text-xs font-medium"
+                       >
+                         Move to
+                       </Button>
+                     )}
                    </h2>
                   <div className="space-y-0">
                      {items.map(item => <div key={item.id} className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'} ${tappedItem === item.id ? 'tapped-state' : ''}`} onClick={() => toggleItem(item)} onTouchStart={() => handleLongPressStart(item)} onTouchEnd={handleLongPressEnd} onMouseDown={() => handleLongPressStart(item)} onMouseUp={handleLongPressEnd} onMouseLeave={handleLongPressEnd}>
