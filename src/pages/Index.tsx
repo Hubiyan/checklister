@@ -525,7 +525,7 @@ export default function Index() {
                     onClick={() => moveItemToCategory(aisle)}
                     className="w-full text-left px-0 py-3 hover:bg-gray-50 transition-colors flex items-center gap-4 border-b border-gray-100 last:border-b-0"
                   >
-                    <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0"></div>
+                    <span className="text-lg flex-shrink-0">{getCategoryEmoji(aisle)}</span>
                     <span className="text-sm font-medium text-black">{aisle}</span>
                   </button>
                 ))}
