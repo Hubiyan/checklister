@@ -14,28 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 
 // Aisle categories in correct order
-const DEFAULT_AISLES = [
-  "Dairy & Eggs",
-  "Meat, Fish & Frozen", 
-  "Vegetables & Herbs",
-  "Fruits",
-  "Bakery & Breads",
-  "Pantry Staples",
-  "Grains, Rice & Pulses",
-  "Pasta & Noodles",
-  "Baking & Desserts",
-  "Beverages",
-  "Snacks",
-  "Spices & Condiments",
-  "Household & Cleaning",
-  "Personal Care",
-  "Baby",
-  "Pets",
-  "Unrecognized"
-] as const;
-
+const DEFAULT_AISLES = ["Dairy & Eggs", "Meat, Fish & Frozen", "Vegetables & Herbs", "Fruits", "Bakery & Breads", "Pantry Staples", "Grains, Rice & Pulses", "Pasta & Noodles", "Baking & Desserts", "Beverages", "Snacks", "Spices & Condiments", "Household & Cleaning", "Personal Care", "Baby", "Pets", "Unrecognized"] as const;
 type Aisle = (typeof DEFAULT_AISLES)[number];
-
 type ChecklistItem = {
   id: string;
   name: string;
@@ -43,9 +23,7 @@ type ChecklistItem = {
   checked: boolean;
   amount?: number;
 };
-
 const LS_KEY = "checklister-current";
-
 function getCategoryEmoji(category: string): string {
   const emojiMap: Record<string, string> = {
     "Dairy & Eggs": "🥛",
@@ -66,19 +44,11 @@ function getCategoryEmoji(category: string): string {
     "Pets": "🐕",
     "Unrecognized": "❓"
   };
-  
   return emojiMap[category] || "🛒";
 }
-
 function parseLines(text: string): string[] {
-  return text
-    .split(/\r?\n|,|;/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((s) => s.replace(/^[-*\d.)\s]+/, ""))
-    .filter((s) => s.length > 0);
+  return text.split(/\r?\n|,|;/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/^[-*\d.)\s]+/, "")).filter(s => s.length > 0);
 }
-
 function itemsFromAislesJson(json: any): ChecklistItem[] {
   // Handle new categories format
   if (Array.isArray(json?.categories)) {
@@ -90,7 +60,7 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
             id: crypto.randomUUID(),
             name: item.display_name || item.name || "",
             aisle: category.name || "Other / Misc",
-            checked: false,
+            checked: false
           });
         });
       }
@@ -104,7 +74,7 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
       id: crypto.randomUUID(),
       name: item.input || item.display_name || item.name || "",
       aisle: item.category || item.aisle || "Other / Misc",
-      checked: false,
+      checked: false
     }));
   }
 
@@ -112,26 +82,33 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
   const aisles: Record<string, string[]> = json?.aisles || {};
   const out: ChecklistItem[] = [];
   for (const [aisle, list] of Object.entries(aisles)) {
-    (list || []).forEach((name) => {
-      out.push({ id: crypto.randomUUID(), name, aisle, checked: false });
+    (list || []).forEach(name => {
+      out.push({
+        id: crypto.randomUUID(),
+        name,
+        aisle,
+        checked: false
+      });
     });
   }
   // Include uncategorized if provided separately
   if (Array.isArray(json?.uncategorized)) {
-    json.uncategorized.forEach((name: string) =>
-      out.push({ id: crypto.randomUUID(), name, aisle: "uncategorized", checked: false })
-    );
+    json.uncategorized.forEach((name: string) => out.push({
+      id: crypto.randomUUID(),
+      name,
+      aisle: "uncategorized",
+      checked: false
+    }));
   }
   // Deduplicate by name + aisle
   const seen = new Set<string>();
-  return out.filter((i) => {
+  return out.filter(i => {
     const key = `${i.aisle}::${i.name.toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 }
-
 export default function Index() {
   const [screen, setScreen] = useState<"input" | "output">("input");
   const [inputMode, setInputMode] = useState<"text" | "camera">("text");
@@ -164,7 +141,6 @@ export default function Index() {
       }
     } catch {}
   }, []);
-
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(items));
@@ -175,25 +151,20 @@ export default function Index() {
   const isUnrecognized = (aisle: string) => {
     return aisle === "Unrecognized";
   };
-
   const grouped = useMemo(() => {
     const map = new Map<string, ChecklistItem[]>();
     for (const i of items) {
       if (!map.has(i.aisle)) map.set(i.aisle, []);
       map.get(i.aisle)!.push(i);
     }
-    
-    // Order aisles by DEFAULT_AISLES first, then the rest alphabetically
-    const orderedKeys = [
-      ...DEFAULT_AISLES.filter((a) => map.has(a)),
-      ...Array.from(map.keys())
-        .filter((k) => !DEFAULT_AISLES.includes(k as Aisle))
-        .sort(),
-    ];
-    
-    return orderedKeys.map((k) => ({ aisle: k, items: map.get(k)! }));
-  }, [items]);
 
+    // Order aisles by DEFAULT_AISLES first, then the rest alphabetically
+    const orderedKeys = [...DEFAULT_AISLES.filter(a => map.has(a)), ...Array.from(map.keys()).filter(k => !DEFAULT_AISLES.includes(k as Aisle)).sort()];
+    return orderedKeys.map(k => ({
+      aisle: k,
+      items: map.get(k)!
+    }));
+  }, [items]);
   const categorize = useCallback(async (rawItems: string[], urls: string[] = []) => {
     if (rawItems.length === 0 && urls.length === 0) {
       toast.error("No items or URLs to categorize");
@@ -205,21 +176,24 @@ export default function Index() {
       const requestBody: any = {};
       if (rawItems.length > 0) requestBody.items = rawItems;
       if (urls.length > 0) requestBody.urls = urls;
-      
-      const { data, error } = await supabase.functions.invoke("generate-with-ai", {
-        body: requestBody,
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("generate-with-ai", {
+        body: requestBody
       });
       if (error) throw error;
-      
+
       // Handle new response format
       if (data.status === "no_recipe_found") {
-        toast.error(data.notice || "No recipe items found in the provided content", { id: t });
+        toast.error(data.notice || "No recipe items found in the provided content", {
+          id: t
+        });
         return;
       }
-      
       const next = itemsFromAislesJson(data);
       setItems(next);
-      
+
       // Check if there are unrecognized items and show modal
       const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
       if (hasUnrecognized) {
@@ -227,17 +201,19 @@ export default function Index() {
           setShowUnrecognizedModal(true);
         }, 500); // Small delay to let the UI render
       }
-      
-      toast.success("Checklist ready", { id: t });
+      toast.success("Checklist ready", {
+        id: t
+      });
     } catch (err: any) {
       const msg = err?.message || "AI categorization failed";
-      toast.error(`${msg}. Check function logs.`, { id: t });
+      toast.error(`${msg}. Check function logs.`, {
+        id: t
+      });
       console.error('AI categorize error:', err);
     } finally {
       setLoading("idle");
     }
   }, []);
-
   const handleFromText = async () => {
     const inputText = text.trim();
     if (!inputText) return;
@@ -245,51 +221,54 @@ export default function Index() {
     // Check if input contains URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const urls = inputText.match(urlRegex) || [];
-    
     if (urls.length > 0) {
       // If there are URLs, extract them and get remaining text
       const remainingText = inputText.replace(urlRegex, '').trim();
       const textItems = remainingText ? parseLines(remainingText) : [];
-      
       await categorize(textItems, urls);
     } else {
       // No URLs, process as regular text
       const list = parseLines(inputText);
       await categorize(list);
     }
-    
     if (inputText.length > 0) {
       setScreen("output");
     }
   };
-
   const handleFromImage = async () => {
     if (!file) return toast.error("Choose an image first");
     setLoading("ocr");
     setOcrProgress(0);
     const t = toast.loading("Extracting text from image…");
     try {
-      const { data: { text: ocrText } } = await Tesseract.recognize(file, "eng", {
-        logger: (m) => {
+      const {
+        data: {
+          text: ocrText
+        }
+      } = (await Tesseract.recognize(file, "eng", {
+        logger: m => {
           if (m.status === "recognizing text" && m.progress) {
             setOcrProgress(Math.round(m.progress * 100));
           }
-        },
-      }) as any;
+        }
+      })) as any;
       const list = parseLines(ocrText || "");
-      toast.success("Text extracted", { id: t });
+      toast.success("Text extracted", {
+        id: t
+      });
       await categorize(list);
       if (list.length > 0) {
         setScreen("output");
       }
     } catch (e) {
       console.error(e);
-      toast.error("OCR failed", { id: t });
+      toast.error("OCR failed", {
+        id: t
+      });
     } finally {
       setLoading("idle");
     }
   };
-
   const toggleItem = (item: ChecklistItem) => {
     if (!item.checked) {
       // Item is being checked - show amount modal
@@ -298,17 +277,22 @@ export default function Index() {
       setShowAmountModal(true);
     } else {
       // Item is being unchecked - remove amount and uncheck
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: false, amount: undefined } : i)));
+      setItems(prev => prev.map(i => i.id === item.id ? {
+        ...i,
+        checked: false,
+        amount: undefined
+      } : i));
     }
   };
-
   const saveAmount = () => {
     if (selectedItem && amountInput.trim()) {
       const amount = parseFloat(amountInput.trim());
       if (!isNaN(amount) && amount > 0) {
-        setItems((prev) => prev.map((i) => 
-          i.id === selectedItem.id ? { ...i, checked: true, amount } : i
-        ));
+        setItems(prev => prev.map(i => i.id === selectedItem.id ? {
+          ...i,
+          checked: true,
+          amount
+        } : i));
         setShowAmountModal(false);
         setSelectedItem(null);
         setAmountInput("");
@@ -317,20 +301,15 @@ export default function Index() {
       }
     }
   };
-
   const totalAmount = useMemo(() => {
-    return items
-      .filter(item => item.checked && item.amount)
-      .reduce((sum, item) => sum + (item.amount || 0), 0);
+    return items.filter(item => item.checked && item.amount).reduce((sum, item) => sum + (item.amount || 0), 0);
   }, [items]);
-
   const checkedItemsCount = useMemo(() => {
     return items.filter(item => item.checked).length;
   }, [items]);
-
   const progressPercentage = useMemo(() => {
     if (items.length === 0) return 0;
-    return (checkedItemsCount / items.length) * 100;
+    return checkedItemsCount / items.length * 100;
   }, [checkedItemsCount, items.length]);
 
   // Show confetti when all items are checked (only for lists with multiple items)
@@ -342,11 +321,9 @@ export default function Index() {
       return () => clearTimeout(timer);
     }
   }, [checkedItemsCount, items.length]);
-
   const handleNewList = () => {
     setShowClearDialog(true);
   };
-
   const confirmNewList = () => {
     setItems([]);
     setText("");
@@ -355,7 +332,6 @@ export default function Index() {
     setInputMode("text");
     setShowClearDialog(false);
   };
-
   const handleTextareaFocus = async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.readText) {
@@ -381,7 +357,6 @@ export default function Index() {
     }, 500); // 500ms long press
     setLongPressTimer(timer);
   };
-
   const handleLongPressEnd = () => {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -393,11 +368,10 @@ export default function Index() {
   // Move item to new category
   const moveItemToCategory = (newAisle: string) => {
     if (itemToMove) {
-      setItems(prev => prev.map(item => 
-        item.id === itemToMove.id 
-          ? { ...item, aisle: newAisle }
-          : item
-      ));
+      setItems(prev => prev.map(item => item.id === itemToMove.id ? {
+        ...item,
+        aisle: newAisle
+      } : item));
       toast.success(`Moved "${itemToMove.name}" to ${newAisle}`);
       setShowCategoryModal(false);
       setItemToMove(null);
@@ -409,27 +383,24 @@ export default function Index() {
     const selectedIds = Array.from(selectedUnrecognizedItems);
     if (selectedIds.length > 0) {
       setItems(prev => {
-        const updatedItems = prev.map(item => 
-          selectedIds.includes(item.id)
-            ? { ...item, aisle: newAisle }
-            : item
-        );
-        
+        const updatedItems = prev.map(item => selectedIds.includes(item.id) ? {
+          ...item,
+          aisle: newAisle
+        } : item);
+
         // Check if there are remaining unrecognized items after the move
         const remainingUnrecognized = updatedItems.filter(item => item.aisle === "Unrecognized");
-        
+
         // Reset selections and view
         setSelectedUnrecognizedItems(new Set());
         setUnrecognizedModalView('items');
-        
+
         // Only close modal if no unrecognized items remain
         if (remainingUnrecognized.length === 0) {
           setShowUnrecognizedModal(false);
         }
-        
         return updatedItems;
       });
-      
       toast.success(`Moved ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''} to ${newAisle}`);
     }
   };
@@ -441,11 +412,9 @@ export default function Index() {
       setItems(prev => prev.filter(item => !selectedIds.includes(item.id)));
       toast.success(`Deleted ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}`);
       setSelectedUnrecognizedItems(new Set());
-      
+
       // Close modal if no more unrecognized items
-      const remainingUnrecognized = items.filter(item => 
-        item.aisle === "Unrecognized" && !selectedIds.includes(item.id)
-      );
+      const remainingUnrecognized = items.filter(item => item.aisle === "Unrecognized" && !selectedIds.includes(item.id));
       if (remainingUnrecognized.length === 0) {
         setShowUnrecognizedModal(false);
       }
@@ -464,12 +433,13 @@ export default function Index() {
       return newSet;
     });
   };
-
   if (screen === "output") {
-    return (
-      <main className="min-h-screen bg-background text-foreground">
+    return <main className="min-h-screen bg-background text-foreground">
         {showConfetti && <Confetti recycle={false} gravity={0.3} />}
-        <div className="max-w-sm mx-auto px-4 space-y-6" style={{ paddingTop: totalAmount > 0 ? '80px' : '64px', paddingBottom: '64px' }}>
+        <div className="max-w-sm mx-auto px-4 space-y-6" style={{
+        paddingTop: totalAmount > 0 ? '80px' : '64px',
+        paddingBottom: '64px'
+      }}>
           {/* Warning Banner */}
           <div className="bg-muted/50 border border-border rounded-lg p-3 flex items-center gap-3">
             <AlertTriangle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -478,84 +448,59 @@ export default function Index() {
 
           {/* Checklist */}
           <div className="space-y-6 pb-20 no-select">
-            {grouped.map(({ aisle, items }, index) => (
-              <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
+            {grouped.map(({
+            aisle,
+            items
+          }, index) => <section key={aisle} className="bg-white border-[0.5px] border-[hsl(var(--category-border))] rounded-xl overflow-hidden shadow-[0_12px_42px_rgba(0,0,0,0.12)]">
                 <div className="space-y-0 bg-transparent">
                    <h2 className="text-base font-bold text-black px-4 py-3 flex items-center gap-2 bg-white border-b-[0.5px] border-[#D5D5D5]">
                      <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                      {aisle}
                    </h2>
                   <div className="space-y-0">
-                     {items.map((item) => (
-                       <div
-                         key={item.id}
-                         className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${
-                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'
-                         } ${tappedItem === item.id ? 'tapped-state' : ''}`}
-                         onClick={() => toggleItem(item)}
-                         onTouchStart={() => handleLongPressStart(item)}
-                         onTouchEnd={handleLongPressEnd}
-                         onMouseDown={() => handleLongPressStart(item)}
-                         onMouseUp={handleLongPressEnd}
-                         onMouseLeave={handleLongPressEnd}
-                       >
+                     {items.map(item => <div key={item.id} className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 cursor-pointer relative ${item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-white'} ${tappedItem === item.id ? 'tapped-state' : ''}`} onClick={() => toggleItem(item)} onTouchStart={() => handleLongPressStart(item)} onTouchEnd={handleLongPressEnd} onMouseDown={() => handleLongPressStart(item)} onMouseUp={handleLongPressEnd} onMouseLeave={handleLongPressEnd}>
                          <div className="flex-shrink-0">
                            <Checkbox checked={item.checked} />
                          </div>
                          <div className="flex-1 flex items-center gap-2">
-                           <span
-                             className={`text-sm font-medium ${
-                               item.checked ? 'line-through text-white' : 'text-black'
-                             }`}
-                           >
+                           <span className={`text-sm font-medium ${item.checked ? 'line-through text-white' : 'text-black'}`}>
                              {item.name}
                            </span>
-                           {isUnrecognized(item.aisle) && (
-                             <span className="unrecognized-chip">
+                           {isUnrecognized(item.aisle) && <span className="unrecognized-chip">
                                unrecognized
-                             </span>
-                           )}
+                             </span>}
                          </div>
-                         {item.checked && item.amount && (
-                           <span className="text-sm text-white">
+                         {item.checked && item.amount && <span className="text-sm text-white">
                              AED {item.amount.toFixed(2)}
-                           </span>
-                         )}
-                       </div>
-                     ))}
+                           </span>}
+                       </div>)}
                   </div>
                 </div>
-              </section>
-            ))}
+              </section>)}
           </div>
 
           {/* Fixed Header with Total Amount */}
-          <div className="fixed inset-x-0 top-0 z-50" style={{ margin: 0, top: 0 }}>
+          <div className="fixed inset-x-0 top-0 z-50" style={{
+          margin: 0,
+          top: 0
+        }}>
             <div className="bg-white w-full">
-              {totalAmount > 0 && (
-                <div className="flex justify-between items-center text-black px-4 py-4">
+              {totalAmount > 0 && <div className="flex justify-between items-center text-black px-4 py-4">
                   <span className="text-lg font-medium">Total:</span>
                   <span className="text-xl font-bold">AED {totalAmount.toFixed(2)}</span>
-                </div>
-              )}
+                </div>}
             </div>
             {/* Progress Bar */}
             <div className="w-full h-[2px] bg-[#D5D5D5]">
-              <div 
-                className="h-full bg-[#009C00] transition-all duration-300 ease-out"
-                style={{ width: `${progressPercentage}%` }}
-              />
+              <div className="h-full bg-[#009C00] transition-all duration-300 ease-out" style={{
+              width: `${progressPercentage}%`
+            }} />
             </div>
           </div>
 
           {/* Floating Add Button */}
           <div className="fixed bottom-6 right-6 z-50">
-            <Button
-              onClick={handleNewList}
-              className="w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg border-0 p-0"
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
+            
           </div>
 
           {/* Clear List Confirmation Dialog */}
@@ -569,10 +514,7 @@ export default function Index() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="text-black border-gray-300">Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={confirmNewList}
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                >
+                <AlertDialogAction onClick={confirmNewList} className="bg-red-500 hover:bg-red-600 text-white">
                   Clear list
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -586,25 +528,12 @@ export default function Index() {
                 <DialogTitle className="text-foreground text-center">Add amount</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="Enter item amount"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      saveAmount();
-                    }
-                  }}
-                  autoFocus
-                  className="bg-input text-foreground border-border"
-                />
-                <Button 
-                  onClick={saveAmount}
-                  className="w-full py-3 text-lg font-semibold"
-                  disabled={!amountInput.trim()}
-                >
+                <Input type="number" inputMode="decimal" placeholder="Enter item amount" value={amountInput} onChange={e => setAmountInput(e.target.value)} onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  saveAmount();
+                }
+              }} autoFocus className="bg-input text-foreground border-border" />
+                <Button onClick={saveAmount} className="w-full py-3 text-lg font-semibold" disabled={!amountInput.trim()}>
                   Save amount
                 </Button>
               </div>
@@ -620,133 +549,79 @@ export default function Index() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-0">
-                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
-                  <button
-                    key={aisle}
-                    onClick={() => moveItemToCategory(aisle)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
-                  >
+                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                       <span className="text-base font-medium text-black">{aisle}</span>
                     </div>
                     <ArrowRight className="h-5 w-5 text-gray-400" />
-                  </button>
-                ))}
+                  </button>)}
               </div>
             </DialogContent>
           </Dialog>
 
           {/* Unrecognized Items Modal */}
-          <Dialog open={showUnrecognizedModal} onOpenChange={(open) => {
-            setShowUnrecognizedModal(open);
-            if (!open) {
-              setUnrecognizedModalView('items');
-            }
-          }}>
+          <Dialog open={showUnrecognizedModal} onOpenChange={open => {
+          setShowUnrecognizedModal(open);
+          if (!open) {
+            setUnrecognizedModalView('items');
+          }
+        }}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
               <DialogHeader className="py-3">
                 <div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {unrecognizedModalView === 'categories' && (
-                        <button
-                          onClick={() => setUnrecognizedModalView('items')}
-                          className="mr-2 text-[#009C00]"
-                        >
+                      {unrecognizedModalView === 'categories' && <button onClick={() => setUnrecognizedModalView('items')} className="mr-2 text-[#009C00]">
                           ←
-                        </button>
-                      )}
+                        </button>}
                       <DialogTitle className="text-base font-bold text-black">
                         {unrecognizedModalView === 'items' ? 'Unrecognized items' : 'Move to'}
                       </DialogTitle>
                     </div>
-                    {unrecognizedModalView === 'items' && (
-                      <span className="text-base font-bold text-black">
+                    {unrecognizedModalView === 'items' && <span className="text-base font-bold text-black">
                         ({items.filter(item => item.aisle === "Unrecognized").length})
-                      </span>
-                    )}
+                      </span>}
                   </div>
-                  {unrecognizedModalView === 'items' && (
-                    <p className="text-sm text-gray-600 mt-1">
+                  {unrecognizedModalView === 'items' && <p className="text-sm text-gray-600 mt-1">
                       These are items we couldn't sort. Select and move or delete items.
-                    </p>
-                  )}
+                    </p>}
                 </div>
               </DialogHeader>
               
-              {unrecognizedModalView === 'items' ? (
-                <>
+              {unrecognizedModalView === 'items' ? <>
                   <div className="space-y-0 max-h-96 overflow-y-auto">
-                    {items.filter(item => item.aisle === "Unrecognized").map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleUnrecognizedItemSelection(item.id)}
-                        className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${
-                          selectedUnrecognizedItems.has(item.id) ? 'bg-[#009C00]' : 'bg-white hover:bg-gray-50'
-                        }`}
-                      >
+                    {items.filter(item => item.aisle === "Unrecognized").map(item => <div key={item.id} onClick={() => toggleUnrecognizedItemSelection(item.id)} className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 relative cursor-pointer ${selectedUnrecognizedItems.has(item.id) ? 'bg-[#009C00]' : 'bg-white hover:bg-gray-50'}`}>
                         <div className="flex-shrink-0">
-                          <Checkbox 
-                            checked={selectedUnrecognizedItems.has(item.id)}
-                            onCheckedChange={() => toggleUnrecognizedItemSelection(item.id)}
-                          />
+                          <Checkbox checked={selectedUnrecognizedItems.has(item.id)} onCheckedChange={() => toggleUnrecognizedItemSelection(item.id)} />
                         </div>
                         <div className="flex-1 flex items-center gap-2">
-                          <span className={`text-sm font-medium ${
-                            selectedUnrecognizedItems.has(item.id) ? 'text-[#FFFFFF]' : 'text-black'
-                          }`}>
+                          <span className={`text-sm font-medium ${selectedUnrecognizedItems.has(item.id) ? 'text-[#FFFFFF]' : 'text-black'}`}>
                             {item.name}
                           </span>
                         </div>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
                   <div className="flex items-center justify-between px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
-                    <button
-                      onClick={deleteSelectedItems}
-                      disabled={selectedUnrecognizedItems.size === 0}
-                      className={`flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center transition-colors ${
-                        selectedUnrecognizedItems.size > 0 
-                          ? 'bg-[#FFE9E9] border-white' 
-                          : 'bg-[#F6F6F9] border-[#F6F6F9]'
-                      }`}
-                    >
+                    <button onClick={deleteSelectedItems} disabled={selectedUnrecognizedItems.size === 0} className={`flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center transition-colors ${selectedUnrecognizedItems.size > 0 ? 'bg-[#FFE9E9] border-white' : 'bg-[#F6F6F9] border-[#F6F6F9]'}`}>
                       <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-red-500' : 'text-[#8E8E93]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
-                    <button
-                      onClick={() => setUnrecognizedModalView('categories')}
-                      disabled={selectedUnrecognizedItems.size === 0}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
-                        selectedUnrecognizedItems.size > 0 
-                          ? 'bg-[#004200] text-[#E6F5E6] hover:bg-[#003000]' 
-                          : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
-                      }`}
-                    >
+                    <button onClick={() => setUnrecognizedModalView('categories')} disabled={selectedUnrecognizedItems.size === 0} className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${selectedUnrecognizedItems.size > 0 ? 'bg-[#004200] text-[#E6F5E6] hover:bg-[#003000]' : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'}`}>
                       Move to
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
-                </>
-              ) : (
-                <div className="space-y-0 max-h-96 overflow-y-auto">
-                  {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
-                    <button
-                      key={aisle}
-                      onClick={() => moveSelectedItemsToCategory(aisle)}
-                      className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0"
-                    >
+                </> : <div className="space-y-0 max-h-96 overflow-y-auto">
+                  {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveSelectedItemsToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                         <span className="text-base font-medium text-[#006428]">{aisle}</span>
                       </div>
                       <ArrowRight className="h-5 w-5 text-[#006428]" />
-                    </button>
-                  ))}
-                </div>
-              )}
+                    </button>)}
+                </div>}
             </DialogContent>
           </Dialog>
 
@@ -763,22 +638,16 @@ export default function Index() {
                 <p className="text-center text-muted-foreground">
                   You have gotten all your groceries. Now you can go home without worrying that you will be scolded for missing something!
                 </p>
-                <Button 
-                  onClick={() => setShowCongratulationsModal(false)}
-                  className="w-full py-3 text-lg font-semibold"
-                >
+                <Button onClick={() => setShowCongratulationsModal(false)} className="w-full py-3 text-lg font-semibold">
                   Alright
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-      </main>
-    );
+      </main>;
   }
-
-  return (
-    <main className="min-h-screen bg-background text-foreground">
+  return <main className="min-h-screen bg-background text-foreground">
       <div className="max-w-sm mx-auto px-6 py-12 space-y-8">
         {/* Header */}
         <div className="text-center space-y-3">
@@ -791,97 +660,65 @@ export default function Index() {
         {/* Text Input Area */}
         <div className="space-y-6">
           <div className="bg-card border border-border rounded-[0.75rem] p-6 min-h-[240px]">
-            <Textarea
-              placeholder="Tap to paste grocery list or recipe URLs..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onFocus={handleTextareaFocus}
-              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 focus:outline-none focus:ring-0 focus:border-none rounded-[0.75rem]"
-            />
+            <Textarea placeholder="Tap to paste grocery list or recipe URLs..." value={text} onChange={e => setText(e.target.value)} onFocus={handleTextareaFocus} className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 focus:outline-none focus:ring-0 focus:border-none rounded-[0.75rem]" />
           </div>
 
           {/* Input Mode Selection */}
           <div className="flex items-center gap-4">
             {/* Image Input Button */}
             <div className="relative">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="w-16 h-16 rounded-[0.75rem] bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 p-0"
-                onClick={() => {
-                  if (inputMode === "camera") {
-                    setInputMode("text");
-                  } else {
-                    setInputMode("camera");
-                  }
-                }}
-              >
+              <Button variant="secondary" size="lg" className="w-16 h-16 rounded-[0.75rem] bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 p-0" onClick={() => {
+              if (inputMode === "camera") {
+                setInputMode("text");
+              } else {
+                setInputMode("camera");
+              }
+            }}>
                 <Image className="h-6 w-6 text-primary-foreground" />
               </Button>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
+              <input type="file" accept="image/*" capture="environment" onChange={e => setFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
             </div>
 
             {/* Get Sorted Button */}
-            <Button
-              onClick={text.trim() ? handleFromText : handleFromImage}
-              disabled={(!text.trim() && !file) || loading !== "idle"}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-semibold border-0"
-            >
+            <Button onClick={text.trim() ? handleFromText : handleFromImage} disabled={!text.trim() && !file || loading !== "idle"} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-semibold border-0">
               {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Button>
           </div>
 
           {/* Camera/Photos Selection (when image mode is active) */}
-          {inputMode === "camera" && (
-            <div className="bg-accent rounded-[0.75rem] p-4">
+          {inputMode === "camera" && <div className="bg-accent rounded-[0.75rem] p-4">
               <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="secondary"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center"
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.capture = 'environment';
-                    input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) setFile(file);
-                    };
-                    input.click();
-                  }}
-                >
+                <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center" onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.capture = 'environment';
+              input.onchange = e => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) setFile(file);
+              };
+              input.click();
+            }}>
                   <Camera className="h-6 w-6 mb-2" />
                   Camera
                 </Button>
-                <Button
-                  variant="secondary"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center"
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) setFile(file);
-                    };
-                    input.click();
-                  }}
-                >
+                <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center" onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.onchange = e => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) setFile(file);
+              };
+              input.click();
+            }}>
                   <Image className="h-6 w-6 mb-2" />
                   Photos
                 </Button>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
-    </main>
-  );
+    </main>;
 }
