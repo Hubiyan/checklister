@@ -459,17 +459,16 @@ export default function Index() {
                        {aisle}
                      </div>
                      {aisle === "Unrecognized" && (
-                       <Button
-                         variant="outline"
-                         size="sm"
+                       <button
                          onClick={(e) => {
                            e.stopPropagation();
                            setShowUnrecognizedModal(true);
                          }}
-                         className="h-7 px-2 text-xs font-medium"
+                         className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors bg-[#004200] text-[#E6F5E6] hover:bg-[#003000]"
                        >
                          Move to
-                       </Button>
+                         <ArrowRight className="w-4 h-4" />
+                       </button>
                      )}
                    </h2>
                   <div className="space-y-0">
