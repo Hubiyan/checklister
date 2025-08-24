@@ -40,7 +40,7 @@ All colors MUST be HSL.
     /* Custom colors for shopping list */
     --checked-bg: 142 76% 36%;
     --separator: 0 0% 89.8%;
-    --category-border: 0 0% 89.8%;
+    --category-border: 30 2% 90%;
   }
 
   .dark {
@@ -75,7 +75,7 @@ All colors MUST be HSL.
     /* Custom colors for shopping list */
     --checked-bg: 142 76% 36%;
     --separator: 0 0% 89.8%;
-    --category-border: 0 0% 89.8%;
+    --category-border: 30 2% 90%;
   }
 }
 
