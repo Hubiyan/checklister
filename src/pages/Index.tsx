@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Camera, Image, ArrowRight, AlertTriangle, CheckCircle, Circle, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Simple aisle list used for ordering - matching the design
 const DEFAULT_AISLES = [
@@ -29,6 +32,7 @@ type ChecklistItem = {
   name: string;
   aisle: Aisle | string;
   checked: boolean;
+  amount?: number;
 };
 
 const LS_KEY = "checklister-current";
@@ -86,6 +90,9 @@ export default function Index() {
   const [loading, setLoading] = useState<"idle" | "ocr" | "ai">("idle");
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showAmountModal, setShowAmountModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
+  const [amountInput, setAmountInput] = useState("");
 
   // Load/save local state
   useEffect(() => {
@@ -207,9 +214,39 @@ export default function Index() {
     }
   };
 
-  const toggleItem = (id: string, checked: boolean) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked } : i)));
+  const toggleItem = (item: ChecklistItem) => {
+    if (!item.checked) {
+      // Item is being checked - show amount modal
+      setSelectedItem(item);
+      setAmountInput("");
+      setShowAmountModal(true);
+    } else {
+      // Item is being unchecked - remove amount and uncheck
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: false, amount: undefined } : i)));
+    }
   };
+
+  const saveAmount = () => {
+    if (selectedItem && amountInput.trim()) {
+      const amount = parseFloat(amountInput.trim());
+      if (!isNaN(amount) && amount > 0) {
+        setItems((prev) => prev.map((i) => 
+          i.id === selectedItem.id ? { ...i, checked: true, amount } : i
+        ));
+        setShowAmountModal(false);
+        setSelectedItem(null);
+        setAmountInput("");
+      } else {
+        toast.error("Please enter a valid amount");
+      }
+    }
+  };
+
+  const totalAmount = useMemo(() => {
+    return items
+      .filter(item => item.checked && item.amount)
+      .reduce((sum, item) => sum + (item.amount || 0), 0);
+  }, [items]);
 
   const handleNewList = () => {
     setShowClearDialog(true);
@@ -265,14 +302,10 @@ export default function Index() {
                         className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-transparent'
                         }`}
-                        onClick={() => toggleItem(item.id, !item.checked)}
+                        onClick={() => toggleItem(item)}
                       >
                         <div className="flex-shrink-0">
-                          {item.checked ? (
-                            <CheckCircle className="w-6 h-6 text-white" />
-                          ) : (
-                            <Circle className="w-6 h-6 text-white" />
-                          )}
+                          <Checkbox checked={item.checked} />
                         </div>
                         <span
                           className={`flex-1 text-sm ${
@@ -281,6 +314,11 @@ export default function Index() {
                         >
                           {item.name}
                         </span>
+                        {item.checked && item.amount && (
+                          <span className="text-sm text-white/70">
+                            AED {item.amount.toFixed(2)}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -289,9 +327,15 @@ export default function Index() {
             ))}
           </div>
 
-          {/* Fixed New List Button */}
+          {/* Fixed Footer with Total and New List Button */}
           <div className="fixed bottom-0 left-4 right-4">
-            <div className="bg-[#121712] p-2 rounded-[0.75rem]">
+            <div className="bg-[#121712] p-4 rounded-[0.75rem] space-y-4">
+              {totalAmount > 0 && (
+                <div className="flex justify-between items-center text-white">
+                  <span className="text-lg font-medium">Total:</span>
+                  <span className="text-xl font-bold">AED {totalAmount.toFixed(2)}</span>
+                </div>
+              )}
               <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -299,7 +343,7 @@ export default function Index() {
                     className="w-full py-4 h-auto text-lg font-medium"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    New List
+                    New
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-card border-border">
@@ -319,6 +363,38 @@ export default function Index() {
               </AlertDialog>
             </div>
           </div>
+
+          {/* Amount Modal */}
+          <Dialog open={showAmountModal} onOpenChange={setShowAmountModal}>
+            <DialogContent className="bg-card border-border max-w-sm mx-auto">
+              <DialogHeader>
+                <DialogTitle className="text-foreground text-center">Add amount</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="Enter item amount"
+                  value={amountInput}
+                  onChange={(e) => setAmountInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveAmount();
+                    }
+                  }}
+                  autoFocus
+                  className="bg-input text-foreground border-border"
+                />
+                <Button 
+                  onClick={saveAmount}
+                  className="w-full py-3 text-lg font-medium"
+                  disabled={!amountInput.trim()}
+                >
+                  Save amount
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     );
