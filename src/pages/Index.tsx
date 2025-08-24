@@ -301,7 +301,7 @@ export default function Index() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer rounded-lg ${
+                        className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer ${
                           item.checked ? 'bg-[hsl(var(--checked-bg))]' : 'bg-transparent'
                         }`}
                         onClick={() => toggleItem(item)}
