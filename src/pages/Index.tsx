@@ -150,6 +150,9 @@ export default function Index() {
   const [itemToMove, setItemToMove] = useState<ChecklistItem | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [tappedItem, setTappedItem] = useState<string | null>(null);
+  const [showUnrecognizedModal, setShowUnrecognizedModal] = useState(false);
+  const [selectedUnrecognizedItems, setSelectedUnrecognizedItems] = useState<Set<string>>(new Set());
+  const [showMoveToModal, setShowMoveToModal] = useState(false);
 
   // Load/save local state
   useEffect(() => {
@@ -216,6 +219,15 @@ export default function Index() {
       
       const next = itemsFromAislesJson(data);
       setItems(next);
+      
+      // Check if there are unrecognized items and show modal
+      const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
+      if (hasUnrecognized) {
+        setTimeout(() => {
+          setShowUnrecognizedModal(true);
+        }, 500); // Small delay to let the UI render
+      }
+      
       toast.success("Checklist ready", { id: t });
     } catch (err: any) {
       const msg = err?.message || "AI categorization failed";
@@ -392,6 +404,53 @@ export default function Index() {
     }
   };
 
+  // Move selected unrecognized items to new category
+  const moveSelectedItemsToCategory = (newAisle: string) => {
+    const selectedIds = Array.from(selectedUnrecognizedItems);
+    if (selectedIds.length > 0) {
+      setItems(prev => prev.map(item => 
+        selectedIds.includes(item.id)
+          ? { ...item, aisle: newAisle }
+          : item
+      ));
+      toast.success(`Moved ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''} to ${newAisle}`);
+      setSelectedUnrecognizedItems(new Set());
+      setShowMoveToModal(false);
+      setShowUnrecognizedModal(false);
+    }
+  };
+
+  // Delete selected unrecognized items
+  const deleteSelectedItems = () => {
+    const selectedIds = Array.from(selectedUnrecognizedItems);
+    if (selectedIds.length > 0) {
+      setItems(prev => prev.filter(item => !selectedIds.includes(item.id)));
+      toast.success(`Deleted ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}`);
+      setSelectedUnrecognizedItems(new Set());
+      
+      // Close modal if no more unrecognized items
+      const remainingUnrecognized = items.filter(item => 
+        item.aisle === "Unrecognized" && !selectedIds.includes(item.id)
+      );
+      if (remainingUnrecognized.length === 0) {
+        setShowUnrecognizedModal(false);
+      }
+    }
+  };
+
+  // Toggle selection of unrecognized item
+  const toggleUnrecognizedItemSelection = (itemId: string) => {
+    setSelectedUnrecognizedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
   if (screen === "output") {
     return (
       <main className="min-h-screen bg-background text-foreground">
@@ -475,6 +534,37 @@ export default function Index() {
             </div>
           </div>
 
+          {/* Floating Add Button */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button
+              onClick={handleNewList}
+              className="w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg border-0 p-0"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
+          </div>
+
+          {/* Clear List Confirmation Dialog */}
+          <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+            <AlertDialogContent className="bg-white max-w-sm mx-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-black">Start a new list?</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-600">
+                  This will clear your current list and start fresh. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="text-black border-gray-300">Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={confirmNewList}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Clear list
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           {/* Amount Modal */}
           <Dialog open={showAmountModal} onOpenChange={setShowAmountModal}>
             <DialogContent className="bg-card border-border max-w-sm mx-auto">
@@ -507,28 +597,125 @@ export default function Index() {
             </DialogContent>
           </Dialog>
 
-          {/* Category Selection Modal */}
+          {/* Category Selection Modal (for long press) */}
           <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-            <DialogContent className="bg-white border-0 max-w-sm mx-auto rounded-2xl p-6 shadow-xl">
-              <DialogHeader className="pb-4">
-                <DialogTitle className="text-black text-left text-lg font-semibold leading-tight">
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
+              <DialogHeader className="pb-2">
+                <DialogTitle className="text-lg font-semibold text-black text-left">
                   Move {itemToMove?.name} to
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-1 max-h-80 overflow-y-auto">
-                {DEFAULT_AISLES.map((aisle) => (
+              <div className="space-y-0">
+                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
                   <button
                     key={aisle}
                     onClick={() => moveItemToCategory(aisle)}
-                    className="w-full text-left px-0 py-3 hover:bg-gray-50 transition-colors flex items-center gap-4 border-b border-gray-100 last:border-b-0"
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
-                    <span className="text-lg flex-shrink-0">{getCategoryEmoji(aisle)}</span>
-                    <span className="text-sm font-medium text-black">{aisle}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                      <span className="text-base font-medium text-black">{aisle}</span>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
                   </button>
                 ))}
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Unrecognized Items Modal */}
+          <Dialog open={showUnrecognizedModal} onOpenChange={setShowUnrecognizedModal}>
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
+              <DialogHeader className="pb-2">
+                <DialogTitle className="text-lg font-semibold text-black text-left flex items-center gap-2">
+                  <span className="text-red-500">❓</span>
+                  Unrecognized
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-0 max-h-96 overflow-y-auto">
+                {items.filter(item => item.aisle === "Unrecognized").map((item) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center justify-between p-4 transition-colors border-b border-gray-100 last:border-b-0 ${
+                      selectedUnrecognizedItems.has(item.id) ? 'bg-green-100' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleUnrecognizedItemSelection(item.id)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          selectedUnrecognizedItems.has(item.id) 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        {selectedUnrecognizedItems.has(item.id) && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                      <span className="text-base font-medium text-black">{item.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <button
+                  onClick={deleteSelectedItems}
+                  disabled={selectedUnrecognizedItems.size === 0}
+                  className={`p-3 rounded-lg ${
+                    selectedUnrecognizedItems.size > 0 
+                      ? 'bg-red-500 hover:bg-red-600' 
+                      : 'bg-gray-200'
+                  } transition-colors`}
+                >
+                  <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-white' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowMoveToModal(true)}
+                  disabled={selectedUnrecognizedItems.size === 0}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    selectedUnrecognizedItems.size > 0 
+                      ? 'bg-green-500 text-white hover:bg-green-600' 
+                      : 'bg-gray-200 text-gray-400'
+                  }`}
+                >
+                  Move to
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Move To Categories Modal */}
+          <Dialog open={showMoveToModal} onOpenChange={setShowMoveToModal}>
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-2xl">
+              <DialogHeader className="pb-2">
+                <DialogTitle className="text-lg font-semibold text-black text-left">
+                  Move to
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-0">
+                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map((aisle) => (
+                  <button
+                    key={aisle}
+                    onClick={() => moveSelectedItemsToCategory(aisle)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                      <span className="text-base font-medium text-black">{aisle}</span>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+
 
           {/* Congratulations Modal */}
           <Dialog open={showCongratulationsModal} onOpenChange={setShowCongratulationsModal}>
