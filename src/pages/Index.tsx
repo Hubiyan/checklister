@@ -50,9 +50,71 @@ function getCategoryEmoji(category: string): string {
     "Cleaning & Household": "🧽",
     "Personal Care": "🧴",
     "Other / Miscellaneous": "🛒",
+    // Additional comprehensive mappings
+    "Fruits": "🍎",
+    "Vegetables": "🥕",
+    "Meat": "🥩",
+    "Poultry": "🍗",
+    "Fish": "🐟",
+    "Seafood": "🦐",
+    "Milk": "🥛",
+    "Cheese": "🧀",
+    "Eggs": "🥚",
+    "Bread": "🍞",
+    "Pastries": "🥐",
+    "Cakes": "🎂",
+    "Frozen": "❄️",
+    "Ice Cream": "🍦",
+    "Cereals": "🥣",
+    "Pasta": "🍝",
+    "Spices": "🌶️",
+    "Condiments": "🍯",
+    "Snacks": "🍿",
+    "Candy": "🍭",
+    "Beverages": "🥤",
+    "Coffee": "☕",
+    "Tea": "🍵",
+    "Alcohol": "🍷",
+    "Water": "💧",
+    "Juice": "🧃",
+    "Soda": "🥤",
+    "Energy Drinks": "⚡",
+    "Cleaning": "🧽",
+    "Detergent": "🧴",
+    "Paper Products": "🧻",
+    "Toiletries": "🚿",
+    "Cosmetics": "💄",
+    "Medicine": "💊",
+    "Health": "🏥",
+    "Baby": "👶",
+    "Pet": "🐕",
+    "Electronics": "📱",
+    "Stationery": "📝",
+    "Tools": "🔧",
+    "Garden": "🌱",
+    "Automotive": "🚗",
+    "Sports": "⚽",
+    "Books": "📚",
+    "Toys": "🧸",
+    "Clothing": "👕",
+    "Shoes": "👟"
   };
   
-  return emojiMap[category] || "📦";
+  // Direct match
+  if (emojiMap[category]) {
+    return emojiMap[category];
+  }
+  
+  // Fuzzy matching for partial matches
+  const categoryLower = category.toLowerCase();
+  for (const [key, emoji] of Object.entries(emojiMap)) {
+    if (categoryLower.includes(key.toLowerCase()) || key.toLowerCase().includes(categoryLower)) {
+      return emoji;
+    }
+  }
+  
+  // Default fallback
+  return "🛒";
 }
 
 function parseLines(text: string): string[] {
@@ -280,7 +342,7 @@ export default function Index() {
   useEffect(() => {
     if (items.length > 0 && checkedItemsCount === items.length) {
       setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      const timer = setTimeout(() => setShowConfetti(false), 2000);
       return () => clearTimeout(timer);
     }
   }, [checkedItemsCount, items.length]);
@@ -316,7 +378,7 @@ export default function Index() {
   if (screen === "output") {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        {showConfetti && <Confetti />}
+        {showConfetti && <Confetti recycle={false} gravity={0.3} />}
         <div className="max-w-sm mx-auto px-4 py-16 space-y-6">
           {/* Warning Banner */}
           <div className="bg-muted/50 border border-border rounded-lg p-3 flex items-center gap-3">
@@ -367,9 +429,9 @@ export default function Index() {
 
           {/* Fixed Header with Total Amount */}
           <div className="fixed top-0 left-0 right-0 z-50">
-            <div className="bg-white p-4">
+            <div className="bg-white w-full">
               {totalAmount > 0 && (
-                <div className="flex justify-between items-center text-black">
+                <div className="flex justify-between items-center text-black px-4 py-4">
                   <span className="text-lg font-medium">Total:</span>
                   <span className="text-xl font-bold">AED {totalAmount.toFixed(2)}</span>
                 </div>
@@ -378,7 +440,7 @@ export default function Index() {
             {/* Progress Bar */}
             <div className="w-full h-[2px] bg-[#D5D5D5]">
               <div 
-                className="h-full bg-[#D5D5D5] transition-all duration-300 ease-out"
+                className="h-full bg-[#009C00] transition-all duration-300 ease-out"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
