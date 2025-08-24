@@ -597,7 +597,7 @@ export default function Index() {
                         ({items.filter(item => item.aisle === "Unrecognized").length})
                       </span>}
                   </div>
-                  {unrecognizedModalView === 'items' && <p className="text-sm text-gray-600 mt-1">
+                  {unrecognizedModalView === 'items' && <p className="text-sm text-gray-600 mt-1 text-left">
                       These are items we couldn't sort. Select and move or delete items.
                     </p>}
                 </div>
