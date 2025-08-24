@@ -631,12 +631,12 @@ export default function Index() {
             }
           }}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="px-4 py-3">
+              <DialogHeader className="py-3">
                 <DialogTitle className="text-base font-bold text-black text-left flex items-center gap-2">
                   {unrecognizedModalView === 'categories' && (
                     <button
                       onClick={() => setUnrecognizedModalView('items')}
-                      className="mr-2"
+                      className="mr-2 text-[#009C00]"
                     >
                       ←
                     </button>
