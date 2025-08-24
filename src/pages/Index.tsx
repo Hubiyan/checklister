@@ -408,15 +408,29 @@ export default function Index() {
   const moveSelectedItemsToCategory = (newAisle: string) => {
     const selectedIds = Array.from(selectedUnrecognizedItems);
     if (selectedIds.length > 0) {
-      setItems(prev => prev.map(item => 
-        selectedIds.includes(item.id)
-          ? { ...item, aisle: newAisle }
-          : item
-      ));
+      setItems(prev => {
+        const updatedItems = prev.map(item => 
+          selectedIds.includes(item.id)
+            ? { ...item, aisle: newAisle }
+            : item
+        );
+        
+        // Check if there are remaining unrecognized items after the move
+        const remainingUnrecognized = updatedItems.filter(item => item.aisle === "Unrecognized");
+        
+        // Reset selections and view
+        setSelectedUnrecognizedItems(new Set());
+        setUnrecognizedModalView('items');
+        
+        // Only close modal if no unrecognized items remain
+        if (remainingUnrecognized.length === 0) {
+          setShowUnrecognizedModal(false);
+        }
+        
+        return updatedItems;
+      });
+      
       toast.success(`Moved ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''} to ${newAisle}`);
-      setSelectedUnrecognizedItems(new Set());
-      setUnrecognizedModalView('items');
-      setShowUnrecognizedModal(false);
     }
   };
 
