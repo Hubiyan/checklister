@@ -651,34 +651,27 @@ export default function Index() {
                         {item.name}
                       </span>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setItems(prev => prev.filter(i => i.id !== item.id));
-                        toast.success(`Deleted "${item.name}"`);
-                        
-                        // Close modal if no more unrecognized items
-                        const remainingUnrecognized = items.filter(i => 
-                          i.aisle === "Unrecognized" && i.id !== item.id
-                        );
-                        if (remainingUnrecognized.length === 0) {
-                          setShowUnrecognizedModal(false);
-                        }
-                      }}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
                   </div>
                 ))}
               </div>
-              <div className="px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
+              <div className="flex items-center gap-3 px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
+                <button
+                  onClick={deleteSelectedItems}
+                  disabled={selectedUnrecognizedItems.size === 0}
+                  className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                    selectedUnrecognizedItems.size > 0 
+                      ? 'bg-red-500 hover:bg-red-600' 
+                      : 'bg-[#F6F6F9]'
+                  }`}
+                >
+                  <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-white' : 'text-[#8E8E93]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
                 <button
                   onClick={() => setShowMoveToModal(true)}
                   disabled={selectedUnrecognizedItems.size === 0}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${
                     selectedUnrecognizedItems.size > 0 
                       ? 'bg-[#E8F5E8] text-[#006428] border border-[#E8F5E8] hover:bg-[#D4F4D4]' 
                       : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'
