@@ -655,7 +655,7 @@ export default function Index() {
                       ←
                     </button>
                   )}
-                  {unrecognizedModalView === 'items' ? 'Unrecognized' : 'Move to'}
+                  {unrecognizedModalView === 'items' ? 'Unrecognized items' : 'Move to'}
                 </DialogTitle>
               </DialogHeader>
               
