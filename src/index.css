@@ -14,7 +14,7 @@ All colors MUST be HSL.
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-    --primary: 142 76% 36%;
+    --primary: 140 100% 20%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
@@ -26,19 +26,19 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 142 76% 36%;
+    --ring: 140 100% 20%;
     --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 45%;
-    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary: 140 100% 20%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 89.8%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-ring: 140 100% 20%;
     
     /* Custom colors for shopping list */
-    --checked-bg: 142 76% 36%;
+    --checked-bg: 140 100% 20%;
     --separator: 0 0% 89.8%;
     --category-border: 30 2% 90%;
   }
@@ -50,7 +50,7 @@ All colors MUST be HSL.
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-    --primary: 142 76% 36%;
+    --primary: 140 100% 20%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
@@ -62,18 +62,18 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 142 76% 36%;
+    --ring: 140 100% 20%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 45%;
-    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary: 140 100% 20%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 89.8%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-ring: 140 100% 20%;
     
     /* Custom colors for shopping list */
-    --checked-bg: 142 76% 36%;
+    --checked-bg: 140 100% 20%;
     --separator: 0 0% 89.8%;
     --category-border: 30 2% 90%;
   }
