@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 
 // Aisle categories in correct order
-const DEFAULT_AISLES = ["Dairy & Eggs", "Meat, Fish & Frozen", "Vegetables & Herbs", "Fruits", "Bakery & Breads", "Pantry Staples", "Grains, Rice & Pulses", "Pasta & Noodles", "Baking & Desserts", "Beverages", "Snacks", "Spices & Condiments", "Household & Cleaning", "Personal Care", "Baby", "Pets", "Unrecognized"] as const;
+const DEFAULT_AISLES = ["Fresh Vegetables & Herbs", "Fresh Fruits", "Meat & Poultry", "Fish & Seafood", "Frozen Foods", "Dairy, Laban & Cheese", "Bakery & Khubz", "Oils, Ghee & Cooking Essentials", "Canned, Jarred & Preserved", "Sauces, Pastes & Condiments", "Spices & Masalas", "Rice, Atta, Flours & Grains", "Pulses & Lentils", "Pasta & Noodles", "Breakfast & Cereals", "Baking & Desserts", "Beverages & Juices", "Water & Carbonated Drinks", "Snacks, Sweets & Chocolates", "Deli & Ready-to-Eat", "Baby Care", "Personal Care", "Household & Cleaning", "Pets", "Unrecognized"] as const;
 type Aisle = (typeof DEFAULT_AISLES)[number];
 type ChecklistItem = {
   id: string;
@@ -50,7 +50,6 @@ function getCategoryEmoji(category: string): string {
     "Personal Care": "🧴",
     "Household & Cleaning": "🧽",
     "Pets": "🐕",
-    "Other / Misc": "🛒",
     "Unrecognized": "❓"
   };
   return emojiMap[category] || "🛒";
@@ -68,7 +67,7 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
           items.push({
             id: crypto.randomUUID(),
             name: item.display_name || item.name || "",
-            aisle: category.name || "Other / Misc",
+            aisle: category.name || "Unrecognized",
             checked: false
           });
         });
@@ -82,7 +81,7 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
     return json.items.map((item: any) => ({
       id: crypto.randomUUID(),
       name: item.input || item.display_name || item.name || "",
-      aisle: item.category || item.aisle || "Other / Misc",
+      aisle: item.category || item.aisle || "Unrecognized",
       checked: false
     }));
   }

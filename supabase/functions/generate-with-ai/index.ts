@@ -35,7 +35,7 @@ const TAXONOMY_CATEGORIES = [
   "Personal Care",
   "Household & Cleaning",
   "Pets",
-  "Other / Misc"
+  "Unrecognized"
 ] as const;
 
 interface ProcessedItem {
@@ -163,7 +163,7 @@ TAXONOMY ORDER (use this exact order):
 22. Personal Care
 23. Household & Cleaning
 24. Pets
-25. Other / Misc
+25. Unrecognized
 
 PRE-PROCESSING
 - Remove URLs.
@@ -207,7 +207,7 @@ CATEGORY MAPPING HEURISTICS
 - Diapers/wipes → Baby Care. Toothpaste/shampoo/body wash/hand soap → Personal Care.
 - Tissues, garbage bags, dishwashing, detergents, surface cleaners, foil, cling film → Household & Cleaning.
 - Pet food and litter → Pets.
-- Supplements and non-grocery retail → Other / Misc.
+- Supplements and non-grocery retail → Unrecognized.
 
 RESOLUTION RULES
 - If Fresh vs Frozen conflict, prefer Frozen when "frozen" is explicit.
@@ -215,7 +215,7 @@ RESOLUTION RULES
 - Coconut: fresh coconut → Fresh Fruits; coconut oil → Oils, Ghee & Cooking Essentials; coconut milk (can) → Canned, Jarred & Preserved unless clearly a beverage.
 - Prepared meats with "grilled/roast" → Meat & Poultry unless clearly deli-packaged → Deli & Ready-to-Eat.
 - Keep near-duplicates distinct when pack sizes differ; merge only true duplicates and record in \`deduped\`.
-- Every input line ends in a category, is ignored, or goes to Other / Misc.
+- Every input line ends in a category, is ignored, or goes to Unrecognized.
 
 OUTPUT FORMAT
 Return JSON only, matching the schema below. No extra keys. No markdown. Deterministic.
@@ -368,7 +368,7 @@ function fallbackCategorization(items: string[], sourceType: "text" | "url_page"
   const categories: Record<string, any[]> = {};
 
   items.forEach(item => {
-    let category = "Other / Misc";
+    let category = "Unrecognized";
     const itemLower = item.toLowerCase().trim();
     
     // Skip empty or meaningless items
