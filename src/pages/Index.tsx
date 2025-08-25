@@ -571,7 +571,7 @@ export default function Index() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-0 max-h-96 overflow-y-auto">
-                {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
+                {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                       <span className="text-base font-medium text-[#006428]">{aisle}</span>
@@ -636,7 +636,7 @@ export default function Index() {
                     </button>
                   </div>
                 </> : <div className="space-y-0 max-h-96 overflow-y-auto">
-                  {DEFAULT_AISLES.filter(aisle => aisle !== "Unrecognized").map(aisle => <button key={aisle} onClick={() => moveSelectedItemsToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
+                  {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveSelectedItemsToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
                       <div className="flex items-center gap-3">
                         <span className="text-lg">{getCategoryEmoji(aisle)}</span>
                         <span className="text-base font-medium text-[#006428]">{aisle}</span>
