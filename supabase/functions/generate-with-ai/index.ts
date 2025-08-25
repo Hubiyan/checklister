@@ -11,23 +11,31 @@ const corsHeaders = {
 
 // TAXONOMY (ORDER MATTERS — USE THIS ORDER)
 const TAXONOMY_CATEGORIES = [
-  "Dairy & Eggs",
-  "Meat, Fish & Frozen",
-  "Vegetables & Herbs",
-  "Fruits",
-  "Bakery & Breads",
-  "Pantry Staples",
-  "Grains, Rice & Pulses",
+  "Fresh Vegetables & Herbs",
+  "Fresh Fruits",
+  "Meat & Poultry",
+  "Fish & Seafood",
+  "Frozen Foods",
+  "Dairy, Laban & Cheese",
+  "Bakery & Khubz",
+  "Oils, Ghee & Cooking Essentials",
+  "Canned, Jarred & Preserved",
+  "Sauces, Pastes & Condiments",
+  "Spices & Masalas",
+  "Rice, Atta, Flours & Grains",
+  "Pulses & Lentils",
   "Pasta & Noodles",
+  "Breakfast & Cereals",
   "Baking & Desserts",
-  "Beverages",
-  "Snacks",
-  "Spices & Condiments",
-  "Household & Cleaning",
+  "Beverages & Juices",
+  "Water & Carbonated Drinks",
+  "Snacks, Sweets & Chocolates",
+  "Deli & Ready-to-Eat",
+  "Baby Care",
   "Personal Care",
-  "Baby",
+  "Household & Cleaning",
   "Pets",
-  "Unrecognized"
+  "Other / Misc"
 ] as const;
 
 interface ProcessedItem {
@@ -125,113 +133,112 @@ async function fetchUrlContent(url: string): Promise<{ content: string; type: "p
 }
 
 function createSystemPrompt(): string {
-  return `SYSTEM ROLE: Grocery Aisle Categorizer
+  return `SYSTEM ROLE: Grocery Aisle Categorizer (UAE)
 
 OBJECTIVE
-You receive raw pasted text from a user. Return a structured, deterministic categorization of grocery items by supermarket aisle using the taxonomy and rules below. No chit-chat. Output JSON only.
+You will receive raw pasted text from a user. Return a structured, deterministic categorization of items into UAE-relevant supermarket aisles. No chit-chat. Output JSON only that matches the schema provided below.
 
-TAXONOMY (ORDER MATTERS — USE THIS ORDER)
-1. Dairy & Eggs
-2. Meat, Fish & Frozen
-3. Vegetables & Herbs
-4. Fruits
-5. Bakery & Breads
-6. Pantry Staples
-7. Grains, Rice & Pulses
-8. Pasta & Noodles
-9. Baking & Desserts
-10. Beverages
-11. Snacks
-12. Spices & Condiments
-13. Household & Cleaning
-14. Personal Care
-15. Baby
-16. Pets
-17. Unrecognized
+TAXONOMY ORDER (use this exact order):
+1. Fresh Vegetables & Herbs
+2. Fresh Fruits
+3. Meat & Poultry
+4. Fish & Seafood
+5. Frozen Foods
+6. Dairy, Laban & Cheese
+7. Bakery & Khubz
+8. Oils, Ghee & Cooking Essentials
+9. Canned, Jarred & Preserved
+10. Sauces, Pastes & Condiments
+11. Spices & Masalas
+12. Rice, Atta, Flours & Grains
+13. Pulses & Lentils
+14. Pasta & Noodles
+15. Breakfast & Cereals
+16. Baking & Desserts
+17. Beverages & Juices
+18. Water & Carbonated Drinks
+19. Snacks, Sweets & Chocolates
+20. Deli & Ready-to-Eat
+21. Baby Care
+22. Personal Care
+23. Household & Cleaning
+24. Pets
+25. Other / Misc
 
-PRE-PROCESSING RULES
-- Remove all URLs.
-- Ignore lines that are only symbols, dividers, or stray adjectives (e.g., "—", "Organic" alone).
-- Strip inline comments starting with "# …".
+PRE-PROCESSING
+- Remove URLs.
+- Strip inline comments starting with "#".
+- Drop lines that are only symbols/dividers or standalone adjectives (e.g., "Organic" alone).
 - Treat quoted phrases as literal product names.
-- Preserve user-provided quantities, packs, and units; do not convert.
-- Translate or map non-English grocery words to English for classification purposes ONLY, but keep original user text as the visible name.
+- Preserve user quantities/units/packs; do not convert.
 
-NORMALISATION RULES
-- Recognise formats like "x3", "(12)", "1 kg", "500 g", "1 l".
-- Keep descriptors only if they change meaning (e.g., "unsalted butter" meaningful; drop "ripe" from bananas).
-- **Regional Name Rule**: Regional synonyms (Arabic, Hindi, Tamil, Urdu, UK vs US food terms) must be RECOGNISED for correct aisle categorisation, but the \`display_name\` shown back to the user must remain EXACTLY as they typed it.
-- Record the recognised equivalent in \`notes\`. Example: \`"aubergine"\` → category Vegetables, \`display_name\` = "aubergine", \`notes\` = "recognised as eggplant".
+REGIONAL NAME RULE (classification vs display)
+- Recognise regional/foreign names for classification, but \`display_name\` MUST equal the exact user text.
+- Put the recognised equivalent in \`notes\` when helpful (e.g., "baingan" → notes: "recognised as eggplant").
 
-EXAMPLES OF SYNONYMS (for classification only, not for display)
-- aubergine / baingan / brinjal = eggplant
-- lady's finger = okra
-- lauki = bottle gourd / calabash
-- white pumpkin = ash gourd
-- cilantro = coriander leaves
-- pudina = mint
-- atta = whole wheat flour
-- maida = all-purpose flour
-- sooji / rava = semolina
-- rajma = kidney beans
-- toor dal / arhar dal = split pigeon pea
-- moong dal = mung bean split
-- chana dal = Bengal gram split
-- دقيق = flour
-- خبز = khubz / bread
-- لبن = laban (yogurt drink)
+UAE SYNONYMS (for classification only; do not change display_name)
+- aubergine/baingan/brinjal = eggplant; lady's finger = okra; lauki = bottle gourd; white pumpkin = ash gourd
+- cilantro = coriander leaves; pudina = mint
+- atta = whole wheat flour; maida = all-purpose flour; sooji/rava = semolina
+- rajma = kidney beans; toor/arhar = split pigeon pea; moong dal = mung split; chana dal = Bengal gram split
+- khubz/kuboos/samoon/pita → Bakery & Khubz
+- laban (لبن) → yogurt drink (Dairy, Laban & Cheese); labneh → Dairy, Laban & Cheese
+- tahini, halawa/halva, pickled turnips, vine leaves → Canned, Jarred & Preserved (unless clearly a fresh/deli item)
 
 CATEGORY MAPPING HEURISTICS
-- Refrigerated dairy: milk, yogurt, labneh, Greek yogurt, paneer, cheese, butter → Dairy & Eggs.
-- Eggs always → Dairy & Eggs.
-- Fresh proteins and all frozen foods (nuggets, fries, paratha) → Meat, Fish & Frozen. Prefer Frozen here when "frozen" is present.
-- Fresh veg/herbs → Vegetables & Herbs.
-- Fresh & dried whole fruits → Fruits.
-- Breads, khubz, baguettes, biscuits, crackers, deli sandwiches/salads → Bakery & Breads.
-- Oils, sauces, condiments, pickles, canned bases (paste, passata, diced tomatoes), peanut butter, jams, spreads → Pantry Staples.
-- Rice, cereals, pulses, flours, oats, quinoa → Grains, Rice & Pulses.
-- Pasta, noodles of any type → Pasta & Noodles.
-- Baking agents and dessert ingredients: baking powder/soda, cocoa powder, yeast, vanilla, baking chocolate, hot-chocolate mix → Baking & Desserts.
-- Beverages: juices, sodas, water, coffee/tea, energy drinks, laban, coconut milk (canned) → Beverages.
-- Ready-to-eat and munching items: chips, popcorn, protein bars, granola, cornflakes, jerky → Snacks.
-- Whole spices and blends: garam masala, turmeric, cloves/cardamom/cinnamon; small nuts used as add-ins (walnuts small qty) → Spices & Condiments.
-- Foil, wraps, detergents, tissue, garbage bags, cleaners → Household & Cleaning.
-- Toothpaste, shampoo, body wash, hand soap → Personal Care.
-- Diapers, wipes → Baby.
-- Pet food, litter → Pets.
-- Supplements and non-grocery retail (e.g., multivitamin gummies) → Other / Misc.
+- Fresh veg/herbs → Fresh Vegetables & Herbs. Fresh whole fruits → Fresh Fruits.
+- Raw chilled meat/chicken → Meat & Poultry. Fresh fish/seafood → Fish & Seafood.
+- "Frozen" anywhere → Frozen Foods (e.g., frozen paratha, frozen khubz, fries).
+- Milk, laban, yogurt, labneh, paneer, cheese, butter → Dairy, Laban & Cheese.
+- Breads, khubz, samoon, baguette, biscuits, crackers → Bakery & Khubz.
+- Oils, ghee, vinegar, salt, sugar → Oils, Ghee & Cooking Essentials.
+- Tuna/canned bases, tomato paste/diced/passata, olives, pickles, vine leaves, mango pulp, coconut milk (can, pantry use) → Canned, Jarred & Preserved.
+- Ketchup/mayo/mustard/soy/sriracha/tahini (jar)/chutneys → Sauces, Pastes & Condiments.
+- Whole spices and blends (garam masala, turmeric, cloves/cardamom/cinnamon, baharat, machboos) → Spices & Masalas. Small nuts used as add-ins can go here.
+- Rice, quinoa, oats (bag), flours (atta/maida/semolina) → Rice, Atta, Flours & Grains.
+- Pulses/lentils (rajma, chana, moong, toor/arhar) → Pulses & Lentils.
+- Pasta and noodles of any type → Pasta & Noodles.
+- Cornflakes, granola, breakfast powders → Breakfast & Cereals.
+- Baking powder/soda, cocoa, yeast, vanilla, baking chocolate, hot-chocolate mix → Baking & Desserts.
+- Juices, tea/coffee, energy drinks, coconut water/milk when clearly a drink → Beverages & Juices.
+- Water, sparkling water, colas/sodas → Water & Carbonated Drinks.
+- Chips, namkeen, popcorn, protein bars, chocolate bars, jerky → Snacks, Sweets & Chocolates.
+- Prepared sandwiches/salads/hummus (ready) → Deli & Ready-to-Eat.
+- Diapers/wipes → Baby Care. Toothpaste/shampoo/body wash/hand soap → Personal Care.
+- Tissues, garbage bags, dishwashing, detergents, surface cleaners, foil, cling film → Household & Cleaning.
+- Pet food and litter → Pets.
+- Supplements and non-grocery retail → Other / Misc.
 
 RESOLUTION RULES
-- If item fits Fresh and Frozen, prefer Frozen if marked.
-- Ghee → Pantry Staples (not Dairy).
-- Coconut variants:
-  - "coconut (fresh)" → Fruits
-  - "coconut milk (can)" → Beverages
-  - "coconut oil" → Pantry Staples
-- Prepared meats (e.g., "grilled chicken half") → Meat, Fish & Frozen.
-- Keep near-duplicates distinct when pack sizes differ.
-- Merge pure synonyms only when identical intent and no size/count difference. Record merges in \`deduped\`.
-- Everything must end up in one of: category, ignored, or misc.
+- If Fresh vs Frozen conflict, prefer Frozen when "frozen" is explicit.
+- Ghee → Oils, Ghee & Cooking Essentials.
+- Coconut: fresh coconut → Fresh Fruits; coconut oil → Oils, Ghee & Cooking Essentials; coconut milk (can) → Canned, Jarred & Preserved unless clearly a beverage.
+- Prepared meats with "grilled/roast" → Meat & Poultry unless clearly deli-packaged → Deli & Ready-to-Eat.
+- Keep near-duplicates distinct when pack sizes differ; merge only true duplicates and record in \`deduped\`.
+- Every input line ends in a category, is ignored, or goes to Other / Misc.
 
-OUTPUT FORMAT (JSON ONLY)
+OUTPUT FORMAT
+Return JSON only, matching the schema below. No extra keys. No markdown. Deterministic.
+
+SCHEMA (shape, not JSON Schema syntax):
 {
   "categories": [
     {
-      "name": "<taxonomy category>",
+      "name": "<one of the 25 taxonomy categories>",
       "items": [
         {
-          "display_name": "<exact user text, no rewriting>",
+          "display_name": "<exact user text>",
           "qty": "<as given or null>",
           "unit": "<as given or null>",
-          "notes": "<if a regional/foreign name was recognised, note its equivalent>",
+          "notes": "<classifier note or null>",
           "source_line": "<original line text>"
         }
       ]
     }
   ],
-  "ignored": [],
-  "deduped": [],
-  "warnings": []
+  "ignored": ["<dropped lines>"],
+  "deduped": [{"kept":"<display_name>","merged":["<dupes>"],"reason":"<why>"}],
+  "warnings": ["<ambiguity notes>"]
 }`;
 }
 
@@ -361,7 +368,7 @@ function fallbackCategorization(items: string[], sourceType: "text" | "url_page"
   const categories: Record<string, any[]> = {};
 
   items.forEach(item => {
-    let category = "Unrecognized";
+    let category = "Other / Misc";
     const itemLower = item.toLowerCase().trim();
     
     // Skip empty or meaningless items
@@ -369,53 +376,77 @@ function fallbackCategorization(items: string[], sourceType: "text" | "url_page"
       return;
     }
     
-    // Basic categorization - only for very obvious items
-    if (/\b(milk|cheese|yogurt|butter|eggs|paneer|labneh)\b/i.test(itemLower)) {
-      category = "Dairy & Eggs";
+    // Basic categorization using UAE categories
+    if (/\b(tomato|onion|potato|carrot|lettuce|spinach|garlic|mint|cilantro|vegetables?|baingan|aubergine|brinjal|okra|lauki|pudina)\b/i.test(itemLower)) {
+      category = "Fresh Vegetables & Herbs";
     }
-    else if (/\b(chicken|beef|fish|meat|frozen)\b/i.test(itemLower)) {
-      category = "Meat, Fish & Frozen";
+    else if (/\b(apple|banana|orange|mango|fruits?|coconut)\b/i.test(itemLower)) {
+      category = "Fresh Fruits";
     }
-    else if (/\b(tomato|onion|potato|carrot|lettuce|spinach|garlic|mint|cilantro|vegetables?)\b/i.test(itemLower)) {
-      category = "Vegetables & Herbs";
+    else if (/\b(chicken|beef|meat|mutton|lamb)\b/i.test(itemLower)) {
+      category = "Meat & Poultry";
     }
-    else if (/\b(apple|banana|orange|mango|fruits?)\b/i.test(itemLower)) {
-      category = "Fruits";
+    else if (/\b(fish|seafood|shrimp|prawns|salmon|tuna)\b/i.test(itemLower)) {
+      category = "Fish & Seafood";
     }
-    else if (/\b(bread|bun|bakery)\b/i.test(itemLower)) {
-      category = "Bakery & Breads";
+    else if (/\b(frozen|paratha|fries)\b/i.test(itemLower)) {
+      category = "Frozen Foods";
     }
-    else if (/\b(oil|sauce|ketchup|mayo|vinegar)\b/i.test(itemLower)) {
-      category = "Pantry Staples";
+    else if (/\b(milk|cheese|yogurt|butter|paneer|labneh|laban)\b/i.test(itemLower)) {
+      category = "Dairy, Laban & Cheese";
     }
-    else if (/\b(rice|flour|oats|beans|lentils|grains?)\b/i.test(itemLower)) {
-      category = "Grains, Rice & Pulses";
+    else if (/\b(bread|bun|bakery|khubz|kuboos|samoon|pita|biscuit|cracker)\b/i.test(itemLower)) {
+      category = "Bakery & Khubz";
+    }
+    else if (/\b(oil|ghee|vinegar|salt|sugar)\b/i.test(itemLower)) {
+      category = "Oils, Ghee & Cooking Essentials";
+    }
+    else if (/\b(canned|tuna|tomato paste|olives|pickles|vine leaves|mango pulp)\b/i.test(itemLower)) {
+      category = "Canned, Jarred & Preserved";
+    }
+    else if (/\b(ketchup|mayo|mustard|soy|sriracha|tahini|chutney|sauce)\b/i.test(itemLower)) {
+      category = "Sauces, Pastes & Condiments";
+    }
+    else if (/\b(spice|masala|turmeric|cloves|cardamom|cinnamon|baharat|machboos|salt|pepper)\b/i.test(itemLower)) {
+      category = "Spices & Masalas";
+    }
+    else if (/\b(rice|flour|oats|quinoa|atta|maida|semolina|sooji|rava|grains?)\b/i.test(itemLower)) {
+      category = "Rice, Atta, Flours & Grains";
+    }
+    else if (/\b(beans|lentils|rajma|toor|arhar|moong|chana|dal|pulses?)\b/i.test(itemLower)) {
+      category = "Pulses & Lentils";
     }
     else if (/\b(pasta|noodles|spaghetti)\b/i.test(itemLower)) {
       category = "Pasta & Noodles";
     }
-    else if (/\b(sugar|baking|chocolate|vanilla|cocoa)\b/i.test(itemLower)) {
+    else if (/\b(cornflakes|granola|cereals?|breakfast)\b/i.test(itemLower)) {
+      category = "Breakfast & Cereals";
+    }
+    else if (/\b(baking powder|baking soda|cocoa|yeast|vanilla|baking chocolate|sugar)\b/i.test(itemLower)) {
       category = "Baking & Desserts";
     }
-    else if (/\b(juice|water|soda|coffee|tea|drinks?|beverages?)\b/i.test(itemLower)) {
-      category = "Beverages";
+    else if (/\b(juice|tea|coffee|energy drink|coconut water|beverages?)\b/i.test(itemLower)) {
+      category = "Beverages & Juices";
     }
-    else if (/\b(chips|nuts|snacks?|cookies)\b/i.test(itemLower)) {
-      category = "Snacks";
+    else if (/\b(water|sparkling|cola|soda|carbonated)\b/i.test(itemLower)) {
+      category = "Water & Carbonated Drinks";
     }
-    else if (/\b(spice|salt|pepper|masala)\b/i.test(itemLower)) {
-      category = "Spices & Condiments";
+    else if (/\b(chips|namkeen|popcorn|protein bars|chocolate|jerky|snacks?|sweets?)\b/i.test(itemLower)) {
+      category = "Snacks, Sweets & Chocolates";
     }
-    else if (/\b(detergent|soap|cleaning|tissue|paper)\b/i.test(itemLower)) {
-      category = "Household & Cleaning";
+    else if (/\b(sandwich|salad|hummus|ready|deli)\b/i.test(itemLower)) {
+      category = "Deli & Ready-to-Eat";
     }
-    else if (/\b(shampoo|toothpaste|personal|care)\b/i.test(itemLower)) {
+    else if (/\b(baby|diapers|wipes|infant)\b/i.test(itemLower)) {
+      category = "Baby Care";
+    }
+    else if (/\b(shampoo|toothpaste|body wash|hand soap|personal|care)\b/i.test(itemLower)) {
       category = "Personal Care";
     }
-    else if (/\b(baby|diapers|infant)\b/i.test(itemLower)) {
-      category = "Baby";
+    else if (/\b(detergent|cleaning|tissue|garbage bags|foil|cling film|cleaners)\b/i.test(itemLower)) {
+      category = "Household & Cleaning";
     }
-    else if (/\b(pet|dog|cat|food)\b/i.test(itemLower)) {
+    else if (/\b(pet|dog|cat|food|litter)\b/i.test(itemLower)) {
       category = "Pets";
     }
 
