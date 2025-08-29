@@ -623,10 +623,10 @@ export default function Index() {
             position="top"
             className="max-w-sm mx-auto bg-white rounded-b-[20px]"
           >
-            <div className="py-5 px-5">
+            <div className="pb-5 px-5">
               <div className="relative bg-[#E6F5E6] border border-[#8AD18A] rounded-xl p-4 mb-6">
                 <div className="flex items-center">
-                  <span className="text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope]">D</span>
+                  <span className="text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope]">د.إ</span>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -639,7 +639,7 @@ export default function Index() {
                       }
                     }}
                     autoFocus
-                    className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[120%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full p-2"
+                    className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[100%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full p-[8px]"
                   />
                 </div>
               </div>

@@ -31,7 +31,7 @@ export function ResponsiveModal({
         />
         <div className="fixed top-0 left-0 right-0 bg-white rounded-b-[12px] shadow-lg z-50">
           {title && (
-            <div className="py-3 px-4 border-b border-gray-100">
+            <div className="py-3 px-4">
               <h2 className="text-base font-bold text-black">
                 {title}
               </h2>
