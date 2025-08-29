@@ -314,7 +314,15 @@ export default function Index() {
 
     } catch (e) {
       console.error('Handwriting OCR error:', e);
-      toast.error("Failed to read handwritten list. Please try again with a clearer image.", { id: t });
+      
+      // Check if it's a rate limiting issue
+      if (e.message && e.message.includes('rate limit')) {
+        toast.error("OpenAI is temporarily busy. Please wait a moment and try again.", { id: t });
+      } else if (e.message && e.message.includes('429')) {
+        toast.error("Service is temporarily busy. Please wait a few seconds and try again.", { id: t });
+      } else {
+        toast.error("Unable to process the handwritten list right now. Please try again in a moment.", { id: t });
+      }
     } finally {
       setLoading("idle");
     }
