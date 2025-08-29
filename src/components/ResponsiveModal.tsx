@@ -22,16 +22,31 @@ export function ResponsiveModal({
 }: ResponsiveModalProps) {
   const isMobile = useIsMobile();
 
+  if (isMobile && position === "top") {
+    return (
+      <div className={`fixed inset-0 z-50 ${open ? 'block' : 'hidden'}`}>
+        <div 
+          className="fixed inset-0 bg-black/20" 
+          onClick={() => onOpenChange(false)}
+        />
+        <div className="fixed top-0 left-0 right-0 bg-white rounded-b-[12px] shadow-lg z-50">
+          {title && (
+            <div className="py-3 px-4 border-b border-gray-100">
+              <h2 className="text-base font-bold text-black">
+                {title}
+              </h2>
+            </div>
+          )}
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent 
-          className={`bg-white border-none shadow-lg ${
-            position === "top" 
-              ? "fixed !top-0 !bottom-auto !left-0 !right-0 !transform-none rounded-t-none rounded-b-[12px] !translate-y-0" 
-              : "rounded-t-xl"
-          }`}
-        >
+        <DrawerContent className="bg-white border-none shadow-lg rounded-t-xl">
           {title && (
             <DrawerHeader className="py-3">
               <DrawerTitle className="text-base font-bold text-black">
