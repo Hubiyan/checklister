@@ -639,7 +639,7 @@ export default function Index() {
                       }
                     }}
                     autoFocus
-                    className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full"
+                    className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[120%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full p-2"
                   />
                 </div>
               </div>

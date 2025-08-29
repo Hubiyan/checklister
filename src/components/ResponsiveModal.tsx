@@ -25,7 +25,7 @@ export function ResponsiveModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className={`bg-white border-none shadow-lg ${position === "top" ? "rounded-b-xl" : "rounded-t-xl"}`}>
+        <DrawerContent className={`bg-white border-none shadow-lg ${position === "top" ? "rounded-b-xl fixed top-0 left-0 right-0" : "rounded-t-xl"}`}>
           {title && (
             <DrawerHeader className="py-3">
               <DrawerTitle className="text-base font-bold text-black">
