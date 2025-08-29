@@ -626,7 +626,9 @@ export default function Index() {
             <div className="pb-5 px-5">
               <div className="relative bg-[#E6F5E6] border border-[#8AD18A] rounded-xl p-4 mb-6">
                 <div className="flex items-center">
-                  <span className="text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope]">د.إ</span>
+                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 4V20M10 4V20M14 8C16 6 18 6 20 8V12C18 14 16 14 14 12V8ZM6 12H20" stroke="#006F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -639,6 +641,7 @@ export default function Index() {
                       }
                     }}
                     autoFocus
+                    onFocus={e => e.target.select()}
                     className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[100%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full p-[8px]"
                   />
                 </div>
