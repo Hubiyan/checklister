@@ -52,6 +52,7 @@ interface ProcessRequest {
   items?: string[];
   urls?: string[];
   content?: string; // For when URLs have been fetched and content provided
+  image?: string; // Base64 encoded image for handwritten grocery lists
 }
 
 async function fetchUrlContent(url: string): Promise<{ content: string; type: "page" | "video" }> {
@@ -311,6 +312,93 @@ function parseQuantityAndUnit(text: string): { qty: number; unit: string; notes:
   return { qty: 1, unit: '', notes: text };
 }
 
+async function processHandwrittenImage(imageBase64: string): Promise<any> {
+  try {
+    console.log('Processing handwritten grocery list image with GPT-4o vision...');
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o', // Use GPT-4o for vision capabilities
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert at reading handwritten grocery lists. Your task is to:
+
+1. EXTRACT ONLY GROCERY ITEMS from the handwritten list
+2. Ignore decorative marks, checkboxes, or unrelated scribbles
+3. Convert each handwritten item to clean, readable text
+4. Handle common handwriting variations and abbreviations
+5. Output ONLY a clean list of grocery items, one per line
+
+IMPORTANT RULES:
+- Focus on readable food/grocery items only
+- Ignore checkbox symbols (□, ☑, ✓)
+- Convert abbreviations to full words when obvious (e.g., "veg" → "vegetables")
+- If handwriting is unclear, make best guess for food items
+- Skip any decorative elements, headers, or non-food text
+- Each item should be on its own line
+- Keep quantities/units if clearly written with the item
+
+Example output:
+chicken
+eggs  
+butter
+broccoli
+vegetables
+spinach
+fruits
+cucumber
+tomatoes
+milk
+chapathi
+mango
+orange`
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Please extract all grocery items from this handwritten shopping list. Focus only on food items and ignore checkboxes, decorative elements, and unclear scribbles.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${imageBase64}`,
+                  detail: 'high'
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI Vision API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const extractedText = data.choices[0].message.content;
+    
+    console.log('Extracted text from handwritten image:', extractedText);
+
+    // Now process the extracted text through our regular AI categorization
+    return await processWithAI(extractedText, "text");
+    
+  } catch (error) {
+    console.error('Handwritten image processing error:', error);
+    throw error;
+  }
+}
+
 async function processWithAI(content: string, sourceType: "text" | "url_page" | "url_video"): Promise<any> {
   try {
     const prompt = `${createSystemPrompt()}
@@ -498,6 +586,32 @@ serve(async (req) => {
     let contentToProcess = '';
     let sourceType: "text" | "url_page" | "url_video" = "text";
     let allItems: string[] = [];
+
+    // Handle handwritten grocery list images
+    if (body.image) {
+      console.log('Processing handwritten image...');
+      try {
+        const result = await processHandwrittenImage(body.image);
+        
+        console.log('Handwritten image processing completed successfully');
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (imageError) {
+        console.error('Image processing failed:', imageError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to process handwritten image: ' + imageError.message,
+            status: "error",
+            items: []
+          }), 
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
 
     // Handle text items
     if (body.items && body.items.length > 0) {

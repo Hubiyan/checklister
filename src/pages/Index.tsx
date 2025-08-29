@@ -245,34 +245,76 @@ export default function Index() {
   };
   const handleFromImage = async () => {
     if (!file) return toast.error("Choose an image first");
-    setLoading("ocr");
-    setOcrProgress(0);
-    const t = toast.loading("Extracting text from image…");
+    
+    setLoading("ai");
+    const t = toast.loading("Reading handwritten grocery list with AI...");
+    
     try {
-      const {
-        data: {
-          text: ocrText
-        }
-      } = (await Tesseract.recognize(file, "eng", {
-        logger: m => {
-          if (m.status === "recognizing text" && m.progress) {
-            setOcrProgress(Math.round(m.progress * 100));
-          }
-        }
-      })) as any;
-      const list = parseLines(ocrText || "");
-      toast.success("Text extracted", {
-        id: t
+      // Convert file to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data:image/jpeg;base64, prefix
+          const base64String = result.split(',')[1];
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
-      await categorize(list);
-      if (list.length > 0) {
-        setScreen("output");
+
+      // Send to our enhanced OCR edge function
+      const response = await supabase.functions.invoke('generate-with-ai', {
+        body: { 
+          image: base64
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
       }
+
+      const result = response.data;
+      console.log('AI categorization result:', result);
+
+      if (result && result.categories) {
+        // Convert the result to our ChecklistItem format
+        const processedItems: ChecklistItem[] = [];
+        
+        result.categories.forEach((category: any) => {
+          category.items.forEach((item: any) => {
+            processedItems.push({
+              id: Math.random().toString(36).substr(2, 9),
+              name: item.display_name,
+              aisle: category.name,
+              checked: false,
+              amount: item.qty && item.unit ? parseFloat(item.qty) : undefined
+            });
+          });
+        });
+
+        setItems(processedItems);
+        
+        // Check if there are unrecognized items and show modal
+        const hasUnrecognized = processedItems.some(item => item.aisle === "Unrecognized");
+        if (hasUnrecognized) {
+          setTimeout(() => {
+            setShowUnrecognizedModal(true);
+          }, 500); // Small delay to let the UI render
+        }
+        
+        toast.success(`Successfully extracted ${processedItems.length} items from handwritten list!`, { id: t });
+        
+        if (processedItems.length > 0) {
+          setScreen("output");
+        }
+      } else {
+        throw new Error('No items found in the handwritten list');
+      }
+
     } catch (e) {
-      console.error(e);
-      toast.error("OCR failed", {
-        id: t
-      });
+      console.error('Handwriting OCR error:', e);
+      toast.error("Failed to read handwritten list. Please try again with a clearer image.", { id: t });
     } finally {
       setLoading("idle");
     }
