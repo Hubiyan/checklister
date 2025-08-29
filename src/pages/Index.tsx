@@ -170,6 +170,7 @@ export default function Index() {
   const [selectedUnrecognizedItems, setSelectedUnrecognizedItems] = useState<Set<string>>(new Set());
   const [unrecognizedModalView, setUnrecognizedModalView] = useState<'items' | 'categories' | 'add-category'>('items');
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [showAddCategoryForMove, setShowAddCategoryForMove] = useState(false);
 
   // Load/save local state
   useEffect(() => {
@@ -643,7 +644,7 @@ export default function Index() {
                   Move {itemToMove?.name} to
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-0 max-h-96 overflow-y-auto">
+              <div className="space-y-0 max-h-80 overflow-y-auto">
                 {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{getCategoryEmoji(aisle)}</span>
@@ -652,6 +653,17 @@ export default function Index() {
                     <ArrowRight className="h-5 w-5 text-[#006428]" />
                   </button>)}
               </div>
+              <button onClick={() => {
+                setNewCategoryName("");
+                setShowCategoryModal(false);
+                setShowAddCategoryForMove(true);
+              }} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-t-[0.5px] border-[#009C00] mt-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">➕</span>
+                  <span className="text-base font-medium text-[#006428]">Add new category</span>
+                </div>
+                <ArrowRight className="h-5 w-5 text-[#006428]" />
+              </button>
             </DialogContent>
           </Dialog>
 
@@ -699,11 +711,14 @@ export default function Index() {
                         </div>
                       </div>)}
                   </div>
-                  <div className="flex items-center justify-between px-4 py-3 border-t-[0.5px] border-[#D5D5D5]">
+                  <div className="flex items-center justify-between px-4 py-3 border-t-[0.5px] border-[#D5D5D5] gap-3">
                     <button onClick={deleteSelectedItems} disabled={selectedUnrecognizedItems.size === 0} className={`flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center transition-colors ${selectedUnrecognizedItems.size > 0 ? 'bg-[#FFE9E9] border-white' : 'bg-[#F6F6F9] border-[#F6F6F9]'}`}>
                       <svg className={`w-5 h-5 ${selectedUnrecognizedItems.size > 0 ? 'text-red-500' : 'text-[#8E8E93]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
+                    </button>
+                    <button onClick={() => setUnrecognizedModalView('add-category')} disabled={selectedUnrecognizedItems.size === 0} className={`flex items-center justify-center gap-2 px-3 py-3 rounded-xl font-medium text-sm transition-colors ${selectedUnrecognizedItems.size > 0 ? 'bg-[#E6F5E6] text-[#004200] border border-[#B8E6B8] hover:bg-[#D4F4D4]' : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'}`}>
+                      Add category
                     </button>
                     <button onClick={() => setUnrecognizedModalView('categories')} disabled={selectedUnrecognizedItems.size === 0} className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-base transition-colors ${selectedUnrecognizedItems.size > 0 ? 'bg-[#004200] text-[#E6F5E6] hover:bg-[#003000]' : 'bg-[#F6F6F9] text-[#8E8E93] border border-[#F6F6F9]'}`}>
                       Move to
@@ -720,13 +735,6 @@ export default function Index() {
                         <ArrowRight className="h-5 w-5 text-[#006428]" />
                       </button>)}
                   </div>
-                  <button onClick={() => setUnrecognizedModalView('add-category')} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-t-[0.5px] border-[#009C00] mt-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">➕</span>
-                      <span className="text-base font-medium text-[#006428]">Add new category</span>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-[#006428]" />
-                  </button>
                 </div> : <div className="space-y-4 p-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Enter category name</label>
@@ -758,6 +766,54 @@ export default function Index() {
             </DialogContent>
           </Dialog>
 
+          {/* Add Category Modal (for long press) */}
+          <Dialog open={showAddCategoryForMove} onOpenChange={setShowAddCategoryForMove}>
+            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
+              <DialogHeader className="py-3">
+                <DialogTitle className="text-base font-bold text-black">Add new category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Enter category name</label>
+                  <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                    <span className="text-lg">{newCategoryName ? generateEmojiForCategory(newCategoryName) : "📦"}</span>
+                    <input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Category name"
+                      className="flex-1 bg-transparent border-none outline-none text-base"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newCategoryName.trim() && itemToMove) {
+                          moveItemToCategory(newCategoryName.trim());
+                          setNewCategoryName("");
+                          setShowAddCategoryForMove(false);
+                        }
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (newCategoryName.trim() && itemToMove) {
+                      moveItemToCategory(newCategoryName.trim());
+                      setNewCategoryName("");
+                      setShowAddCategoryForMove(false);
+                    }
+                  }}
+                  disabled={!newCategoryName.trim()}
+                  className={`w-full py-3 px-4 rounded-lg font-medium text-base transition-colors ${
+                    newCategoryName.trim() 
+                      ? 'bg-[#004200] text-white hover:bg-[#003000]' 
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  Add ➕
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Congratulations Modal */}
           <Dialog open={showCongratulationsModal} onOpenChange={setShowCongratulationsModal}>
