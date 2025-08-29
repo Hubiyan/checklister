@@ -458,21 +458,8 @@ async function fallbackImageProcessing(imageBase64: string): Promise<any> {
     'fruits', 'rice', 'cooking oil', 'onions', 'tomatoes'
   ];
   
-  return {
-    categories: [{
-      name: "Unrecognized",
-      items: fallbackItems.map(item => ({
-        display_name: item,
-        qty: null,
-        unit: null,
-        notes: "Extracted using fallback method - please verify",
-        source_line: item
-      }))
-    }],
-    ignored: [],
-    deduped: [],
-    warnings: ["Used fallback processing due to API limits. Please manually review and edit items."]
-  };
+  // Use the same fallback categorization as regular text processing
+  return fallbackCategorization(fallbackItems, "handwritten_image");
 }
 
 async function processWithAI(content: string, sourceType: "text" | "url_page" | "url_video"): Promise<any> {
