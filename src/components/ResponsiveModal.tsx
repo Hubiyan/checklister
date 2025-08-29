@@ -28,10 +28,10 @@ export function ResponsiveModal({
         <DrawerContent 
           className={`bg-white border-none shadow-lg ${
             position === "top" 
-              ? "rounded-b-xl !top-0 !bottom-auto !transform-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top" 
+              ? "!top-0 !bottom-auto rounded-t-none rounded-b-[12px]" 
               : "rounded-t-xl"
           }`}
-          style={position === "top" ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 'auto', transform: 'none' } : undefined}
+          style={position === "top" ? { top: 0, bottom: 'auto' } : undefined}
         >
           {title && (
             <DrawerHeader className="py-3">
