@@ -477,15 +477,14 @@ async function fallbackImageProcessing(imageBase64: string): Promise<any> {
 
 async function processWithAI(content: string, sourceType: "text" | "url_page" | "url_video"): Promise<any> {
   try {
-    const prompt = `${createSystemPrompt()}
-
-INPUT TYPE: ${sourceType}
+    const userPrompt = `INPUT TYPE: ${sourceType}
 CONTENT TO PROCESS:
 ${content}
 
 Extract grocery items and categorize them according to UAE supermarket aisles. Return valid JSON only.`;
 
-    console.log('Sending request to OpenAI...');
+    console.log('Sending request to OpenAI for categorization...');
+    console.log('Content to process:', content);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -497,7 +496,7 @@ Extract grocery items and categorize them according to UAE supermarket aisles. R
         model: 'gpt-4o-mini', // Using legacy model for reliable results
         messages: [
           { role: 'system', content: createSystemPrompt() },
-          { role: 'user', content: prompt }
+          { role: 'user', content: userPrompt }
         ],
         max_tokens: 2000,
         temperature: 0.1,
