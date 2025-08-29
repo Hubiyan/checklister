@@ -402,8 +402,17 @@ orange`
       
       console.log('Successfully extracted text from handwritten image:', extractedText);
 
-      // Now process the extracted text through our regular AI categorization with retry
-      return await processWithAIRetry(extractedText, "text");
+      // Clean and format the extracted text properly
+      const cleanedItems = extractedText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.match(/^[\-\*\+\s]*$/))
+        .join('\n');
+
+      console.log('Cleaned extracted items for categorization:', cleanedItems);
+
+      // Now process the cleaned extracted text through our regular AI categorization with retry
+      return await processWithAIRetry(cleanedItems, "text");
       
     } catch (error) {
       console.error(`Handwritten image processing error on attempt ${attempt}:`, error);
