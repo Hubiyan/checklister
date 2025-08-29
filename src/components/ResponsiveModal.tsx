@@ -25,7 +25,14 @@ export function ResponsiveModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className={`bg-white border-none shadow-lg ${position === "top" ? "rounded-b-xl fixed top-0 left-0 right-0" : "rounded-t-xl"}`}>
+        <DrawerContent 
+          className={`bg-white border-none shadow-lg ${
+            position === "top" 
+              ? "rounded-b-xl !top-0 !bottom-auto !transform-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top" 
+              : "rounded-t-xl"
+          }`}
+          style={position === "top" ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 'auto', transform: 'none' } : undefined}
+        >
           {title && (
             <DrawerHeader className="py-3">
               <DrawerTitle className="text-base font-bold text-black">
