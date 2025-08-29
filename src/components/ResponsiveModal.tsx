@@ -9,6 +9,7 @@ interface ResponsiveModalProps {
   title?: string;
   children: ReactNode;
   className?: string;
+  position?: "top" | "bottom";
 }
 
 export function ResponsiveModal({ 
@@ -16,14 +17,15 @@ export function ResponsiveModal({
   onOpenChange, 
   title, 
   children, 
-  className = "max-w-sm mx-auto" 
+  className = "max-w-sm mx-auto",
+  position = "bottom"
 }: ResponsiveModalProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="bg-white border-none shadow-lg rounded-t-xl">
+        <DrawerContent className={`bg-white border-none shadow-lg ${position === "top" ? "rounded-b-xl" : "rounded-t-xl"}`}>
           {title && (
             <DrawerHeader className="py-3">
               <DrawerTitle className="text-base font-bold text-black">

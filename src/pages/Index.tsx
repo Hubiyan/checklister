@@ -619,7 +619,8 @@ export default function Index() {
           <ResponsiveModal 
             open={showAmountModal} 
             onOpenChange={setShowAmountModal}
-            title="Add amount"
+            title={selectedItem ? `Enter ${selectedItem.name} cost` : "Enter cost"}
+            position="top"
           >
             <div className="space-y-4 py-4 px-4">
               <Input type="number" inputMode="decimal" placeholder="Enter item amount" value={amountInput} onChange={e => setAmountInput(e.target.value)} onKeyDown={e => {
