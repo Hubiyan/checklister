@@ -28,10 +28,9 @@ export function ResponsiveModal({
         <DrawerContent 
           className={`bg-white border-none shadow-lg ${
             position === "top" 
-              ? "!top-0 !bottom-auto rounded-t-none rounded-b-[12px]" 
+              ? "fixed !top-0 !bottom-auto !left-0 !right-0 !transform-none rounded-t-none rounded-b-[12px] !translate-y-0" 
               : "rounded-t-xl"
           }`}
-          style={position === "top" ? { top: 0, bottom: 'auto' } : undefined}
         >
           {title && (
             <DrawerHeader className="py-3">
