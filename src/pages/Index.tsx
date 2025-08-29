@@ -619,18 +619,30 @@ export default function Index() {
           <ResponsiveModal 
             open={showAmountModal} 
             onOpenChange={setShowAmountModal}
-            title={selectedItem ? `Enter ${selectedItem.name} cost` : "Enter cost"}
+            title={selectedItem ? `Enter price of ${selectedItem.name}` : "Enter price"}
             position="top"
+            className="max-w-sm mx-auto bg-white rounded-b-[20px]"
           >
-            <div className="space-y-4 py-4 px-4">
-              <Input type="number" inputMode="decimal" placeholder="Enter item amount" value={amountInput} onChange={e => setAmountInput(e.target.value)} onKeyDown={e => {
-              if (e.key === 'Enter') {
-                saveAmount();
-              }
-            }} autoFocus className="bg-input text-foreground border-border" />
-              <Button onClick={saveAmount} className="w-full py-3 text-lg font-semibold" disabled={!amountInput.trim()}>
-                Save amount
-              </Button>
+            <div className="py-5 px-5">
+              <div className="relative bg-[#E6F5E6] border border-[#8AD18A] rounded-xl p-4 mb-6">
+                <div className="flex items-center">
+                  <span className="text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope]">D</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={amountInput}
+                    onChange={e => setAmountInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        saveAmount();
+                      }
+                    }}
+                    autoFocus
+                    className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[150%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full"
+                  />
+                </div>
+              </div>
             </div>
           </ResponsiveModal>
 
