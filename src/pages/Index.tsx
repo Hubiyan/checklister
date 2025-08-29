@@ -1,17 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Confetti from 'react-confetti';
+import { AlertTriangle, Image, Camera, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import Confetti from "react-confetti";
+import { ResponsiveModal } from "@/components/ResponsiveModal";
 import Tesseract from "tesseract.js";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Image, ArrowRight, AlertTriangle, CheckCircle, Circle, Plus } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 
 // Aisle categories in correct order
 const DEFAULT_AISLES = ["Fresh Vegetables & Herbs", "Fresh Fruits", "Meat & Poultry", "Fish & Seafood", "Frozen Foods", "Dairy, Laban & Cheese", "Bakery & Khubz", "Oils, Ghee & Cooking Essentials", "Canned, Jarred & Preserved", "Sauces, Pastes & Condiments", "Spices & Masalas", "Rice, Atta, Flours & Grains", "Pulses & Lentils", "Pasta & Noodles", "Breakfast & Cereals", "Baking & Desserts", "Beverages & Juices", "Water & Carbonated Drinks", "Snacks, Sweets & Chocolates", "Deli & Ready-to-Eat", "Baby Care", "Personal Care", "Household & Cleaning", "Pets", "Unrecognized"] as const;
@@ -618,85 +616,81 @@ export default function Index() {
           </AlertDialog>
 
           {/* Amount Modal */}
-          <Dialog open={showAmountModal} onOpenChange={setShowAmountModal}>
-            <DialogContent className="bg-card border-border max-w-sm mx-auto">
-              <DialogHeader>
-                <DialogTitle className="text-foreground text-center">Add amount</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <Input type="number" inputMode="decimal" placeholder="Enter item amount" value={amountInput} onChange={e => setAmountInput(e.target.value)} onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  saveAmount();
-                }
-              }} autoFocus className="bg-input text-foreground border-border" />
-                <Button onClick={saveAmount} className="w-full py-3 text-lg font-semibold" disabled={!amountInput.trim()}>
-                  Save amount
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ResponsiveModal 
+            open={showAmountModal} 
+            onOpenChange={setShowAmountModal}
+            title="Add amount"
+          >
+            <div className="space-y-4 py-4 px-4">
+              <Input type="number" inputMode="decimal" placeholder="Enter item amount" value={amountInput} onChange={e => setAmountInput(e.target.value)} onKeyDown={e => {
+              if (e.key === 'Enter') {
+                saveAmount();
+              }
+            }} autoFocus className="bg-input text-foreground border-border" />
+              <Button onClick={saveAmount} className="w-full py-3 text-lg font-semibold" disabled={!amountInput.trim()}>
+                Save amount
+              </Button>
+            </div>
+          </ResponsiveModal>
 
           {/* Category Selection Modal (for long press) */}
-          <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="py-3">
-                <DialogTitle className="text-base font-bold text-black">
-                  Move {itemToMove?.name} to
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-0 max-h-80 overflow-y-auto">
-                {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                      <span className="text-base font-medium text-[#006428]">{aisle}</span>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-[#006428]" />
-                  </button>)}
+          <ResponsiveModal 
+            open={showCategoryModal} 
+            onOpenChange={setShowCategoryModal}
+            title={`Move ${itemToMove?.name} to`}
+          >
+            <div className="space-y-0 max-h-80 overflow-y-auto">
+              {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveItemToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                    <span className="text-base font-medium text-[#006428]">{aisle}</span>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-[#006428]" />
+                </button>)}
+            </div>
+            <button onClick={() => {
+              setNewCategoryName("");
+              setShowCategoryModal(false);
+              setShowAddCategoryForMove(true);
+            }} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-t-[0.5px] border-[#009C00] mt-2">
+              <div className="flex items-center gap-3">
+                <span className="text-lg">➕</span>
+                <span className="text-base font-medium text-[#006428]">Add new category</span>
               </div>
-              <button onClick={() => {
-                setNewCategoryName("");
-                setShowCategoryModal(false);
-                setShowAddCategoryForMove(true);
-              }} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-t-[0.5px] border-[#009C00] mt-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">➕</span>
-                  <span className="text-base font-medium text-[#006428]">Add new category</span>
-                </div>
-                <ArrowRight className="h-5 w-5 text-[#006428]" />
-              </button>
-            </DialogContent>
-          </Dialog>
+              <ArrowRight className="h-5 w-5 text-[#006428]" />
+            </button>
+          </ResponsiveModal>
 
           {/* Unrecognized Items Modal */}
-          <Dialog open={showUnrecognizedModal} onOpenChange={open => {
-          setShowUnrecognizedModal(open);
-          if (!open) {
-            setUnrecognizedModalView('items');
-            setNewCategoryName("");
-          }
-        }}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="py-3">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {(unrecognizedModalView === 'categories' || unrecognizedModalView === 'add-category') && <button onClick={() => setUnrecognizedModalView(unrecognizedModalView === 'add-category' ? 'categories' : 'items')} className="mr-2 text-[#009C00]">
-                          ←
-                        </button>}
-                      <DialogTitle className="text-base font-bold text-black">
-                        {unrecognizedModalView === 'items' ? 'Unrecognized items' : 
-                         unrecognizedModalView === 'categories' ? 'Move to' : 'Add new category'}
-                      </DialogTitle>
-                    </div>
-                    {unrecognizedModalView === 'items' && <span className="text-base font-bold text-black">
-                        ({items.filter(item => item.aisle === "Unrecognized").length})
-                      </span>}
-                  </div>
-                  {unrecognizedModalView === 'items' && <p className="text-sm text-gray-600 mt-1 text-left">
-                      These are items we couldn't sort. Select and move or delete items.
-                    </p>}
+          <ResponsiveModal 
+            open={showUnrecognizedModal} 
+            onOpenChange={open => {
+              setShowUnrecognizedModal(open);
+              if (!open) {
+                setUnrecognizedModalView('items');
+                setNewCategoryName("");
+              }
+            }}
+          >
+            <div className="py-3 px-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {(unrecognizedModalView === 'categories' || unrecognizedModalView === 'add-category') && <button onClick={() => setUnrecognizedModalView(unrecognizedModalView === 'add-category' ? 'categories' : 'items')} className="mr-2 text-[#009C00]">
+                      ←
+                    </button>}
+                  <h2 className="text-base font-bold text-black">
+                    {unrecognizedModalView === 'items' ? 'Unrecognized items' : 
+                     unrecognizedModalView === 'categories' ? 'Move to' : 'Add new category'}
+                  </h2>
                 </div>
-              </DialogHeader>
+                {unrecognizedModalView === 'items' && <span className="text-base font-bold text-black">
+                    ({items.filter(item => item.aisle === "Unrecognized").length})
+                  </span>}
+              </div>
+              {unrecognizedModalView === 'items' && <p className="text-sm text-gray-600 mt-1 text-left">
+                  These are items we couldn't sort. Select and move or delete items.
+                </p>}
+            </div>
               
               {unrecognizedModalView === 'items' ? <>
                   <div className="space-y-0 max-h-96 overflow-y-auto">
@@ -763,76 +757,71 @@ export default function Index() {
                     Add ➕
                   </button>
                 </div>}
-            </DialogContent>
-          </Dialog>
+          </ResponsiveModal>
 
           {/* Add Category Modal (for long press) */}
-          <Dialog open={showAddCategoryForMove} onOpenChange={setShowAddCategoryForMove}>
-            <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
-              <DialogHeader className="py-3">
-                <DialogTitle className="text-base font-bold text-black">Add new category</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 p-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Enter category name</label>
-                  <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-                    <span className="text-lg">{newCategoryName ? generateEmojiForCategory(newCategoryName) : "📦"}</span>
-                    <input
-                      type="text"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      placeholder="Category name"
-                      className="flex-1 bg-transparent border-none outline-none text-base"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newCategoryName.trim() && itemToMove) {
-                          moveItemToCategory(newCategoryName.trim());
-                          setNewCategoryName("");
-                          setShowAddCategoryForMove(false);
-                        }
-                      }}
-                      autoFocus
-                    />
-                  </div>
+          <ResponsiveModal 
+            open={showAddCategoryForMove} 
+            onOpenChange={setShowAddCategoryForMove}
+            title="Add new category"
+          >
+            <div className="space-y-4 p-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Enter category name</label>
+                <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                  <span className="text-lg">{newCategoryName ? generateEmojiForCategory(newCategoryName) : "📦"}</span>
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Category name"
+                    className="flex-1 bg-transparent border-none outline-none text-base"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newCategoryName.trim() && itemToMove) {
+                        moveItemToCategory(newCategoryName.trim());
+                        setNewCategoryName("");
+                        setShowAddCategoryForMove(false);
+                      }
+                    }}
+                    autoFocus
+                  />
                 </div>
-                <button 
-                  onClick={() => {
-                    if (newCategoryName.trim() && itemToMove) {
-                      moveItemToCategory(newCategoryName.trim());
-                      setNewCategoryName("");
-                      setShowAddCategoryForMove(false);
-                    }
-                  }}
-                  disabled={!newCategoryName.trim()}
-                  className={`w-full py-3 px-4 rounded-lg font-medium text-base transition-colors ${
-                    newCategoryName.trim() 
-                      ? 'bg-[#004200] text-white hover:bg-[#003000]' 
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  Add ➕
-                </button>
               </div>
-            </DialogContent>
-          </Dialog>
+              <button 
+                onClick={() => {
+                  if (newCategoryName.trim() && itemToMove) {
+                    moveItemToCategory(newCategoryName.trim());
+                    setNewCategoryName("");
+                    setShowAddCategoryForMove(false);
+                  }
+                }}
+                disabled={!newCategoryName.trim()}
+                className={`w-full py-3 px-4 rounded-lg font-medium text-base transition-colors ${
+                  newCategoryName.trim() 
+                    ? 'bg-[#004200] text-white hover:bg-[#003000]' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Add ➕
+              </button>
+            </div>
+          </ResponsiveModal>
 
           {/* Congratulations Modal */}
-          <Dialog open={showCongratulationsModal} onOpenChange={setShowCongratulationsModal}>
-            <DialogContent className="bg-card border-border max-w-sm mx-auto">
-              <DialogHeader>
-                <DialogTitle className="text-foreground text-center text-xl font-bold">
-                  Congratulations
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-6 py-6">
-                <p className="text-center text-muted-foreground">
-                  You have gotten all your groceries. Now you can go home without worrying that you will be scolded for missing something!
-                </p>
-                <Button onClick={() => setShowCongratulationsModal(false)} className="w-full py-3 text-lg font-semibold">
-                  Alright
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ResponsiveModal 
+            open={showCongratulationsModal} 
+            onOpenChange={setShowCongratulationsModal}
+            title="Congratulations"
+          >
+            <div className="space-y-6 py-6 px-4">
+              <p className="text-center text-muted-foreground">
+                You have gotten all your groceries. Now you can go home without worrying that you will be scolded for missing something!
+              </p>
+              <Button onClick={() => setShowCongratulationsModal(false)} className="w-full py-3 text-lg font-semibold">
+                Alright
+              </Button>
+            </div>
+          </ResponsiveModal>
         </div>
       </main>;
   }
