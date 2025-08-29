@@ -277,39 +277,22 @@ export default function Index() {
       const result = response.data;
       console.log('AI categorization result:', result);
 
-      if (result && result.categories) {
-        // Convert the result to our ChecklistItem format
-        const processedItems: ChecklistItem[] = [];
-        
-        result.categories.forEach((category: any) => {
-          category.items.forEach((item: any) => {
-            processedItems.push({
-              id: Math.random().toString(36).substr(2, 9),
-              name: item.display_name,
-              aisle: category.name,
-              checked: false,
-              amount: item.qty && item.unit ? parseFloat(item.qty) : undefined
-            });
-          });
-        });
-
-        setItems(processedItems);
-        
-        // Check if there are unrecognized items and show modal
-        const hasUnrecognized = processedItems.some(item => item.aisle === "Unrecognized");
-        if (hasUnrecognized) {
-          setTimeout(() => {
-            setShowUnrecognizedModal(true);
-          }, 500); // Small delay to let the UI render
-        }
-        
-        toast.success(`Successfully extracted ${processedItems.length} items from handwritten list!`, { id: t });
-        
-        if (processedItems.length > 0) {
-          setScreen("output");
-        }
-      } else {
-        throw new Error('No items found in the handwritten list');
+      // Use the same categorization logic as text flow
+      const next = itemsFromAislesJson(result);
+      setItems(next);
+      
+      // Check if there are unrecognized items and show modal
+      const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
+      if (hasUnrecognized) {
+        setTimeout(() => {
+          setShowUnrecognizedModal(true);
+        }, 500); // Small delay to let the UI render
+      }
+      
+      toast.success(`Successfully extracted ${next.length} items from handwritten list!`, { id: t });
+      
+      if (next.length > 0) {
+        setScreen("output");
       }
 
     } catch (e) {
