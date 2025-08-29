@@ -52,7 +52,38 @@ function getCategoryEmoji(category: string): string {
     "Pets": "🐕",
     "Unrecognized": "❓"
   };
-  return emojiMap[category] || "🛒";
+  return emojiMap[category] || generateEmojiForCategory(category);
+}
+
+function generateEmojiForCategory(category: string): string {
+  const categoryLower = category.toLowerCase();
+  
+  // Food categories
+  if (categoryLower.includes('fruit') || categoryLower.includes('produce')) return "🍎";
+  if (categoryLower.includes('vegetable') || categoryLower.includes('veggie')) return "🥬";
+  if (categoryLower.includes('meat') || categoryLower.includes('protein')) return "🥩";
+  if (categoryLower.includes('dairy') || categoryLower.includes('milk') || categoryLower.includes('cheese')) return "🥛";
+  if (categoryLower.includes('bread') || categoryLower.includes('bakery') || categoryLower.includes('bake')) return "🍞";
+  if (categoryLower.includes('frozen') || categoryLower.includes('ice')) return "🧊";
+  if (categoryLower.includes('snack') || categoryLower.includes('chip')) return "🍿";
+  if (categoryLower.includes('drink') || categoryLower.includes('beverage') || categoryLower.includes('juice')) return "🥤";
+  if (categoryLower.includes('candy') || categoryLower.includes('sweet') || categoryLower.includes('dessert')) return "🍭";
+  if (categoryLower.includes('spice') || categoryLower.includes('seasoning') || categoryLower.includes('herb')) return "🌶️";
+  if (categoryLower.includes('oil') || categoryLower.includes('condiment')) return "🫗";
+  if (categoryLower.includes('grain') || categoryLower.includes('rice') || categoryLower.includes('pasta')) return "🌾";
+  if (categoryLower.includes('seafood') || categoryLower.includes('fish')) return "🐟";
+  
+  // Non-food categories
+  if (categoryLower.includes('clean') || categoryLower.includes('detergent') || categoryLower.includes('soap')) return "🧽";
+  if (categoryLower.includes('health') || categoryLower.includes('beauty') || categoryLower.includes('care')) return "🧴";
+  if (categoryLower.includes('baby') || categoryLower.includes('infant')) return "👶";
+  if (categoryLower.includes('pet') || categoryLower.includes('dog') || categoryLower.includes('cat')) return "🐕";
+  if (categoryLower.includes('paper') || categoryLower.includes('tissue')) return "🧻";
+  if (categoryLower.includes('medicine') || categoryLower.includes('pharmacy')) return "💊";
+  if (categoryLower.includes('electronic') || categoryLower.includes('battery')) return "🔋";
+  
+  // Default fallback
+  return "📦";
 }
 function parseLines(text: string): string[] {
   return text.split(/\r?\n|,|;/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/^[-*\d.)\s]+/, "")).filter(s => s.length > 0);
@@ -137,7 +168,8 @@ export default function Index() {
   const [tappedItem, setTappedItem] = useState<string | null>(null);
   const [showUnrecognizedModal, setShowUnrecognizedModal] = useState(false);
   const [selectedUnrecognizedItems, setSelectedUnrecognizedItems] = useState<Set<string>>(new Set());
-  const [unrecognizedModalView, setUnrecognizedModalView] = useState<'items' | 'categories'>('items');
+  const [unrecognizedModalView, setUnrecognizedModalView] = useState<'items' | 'categories' | 'add-category'>('items');
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // Load/save local state
   useEffect(() => {
@@ -446,6 +478,14 @@ export default function Index() {
     }
   };
 
+  const addNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+    
+    moveSelectedItemsToCategory(newCategoryName.trim());
+    setNewCategoryName("");
+    setUnrecognizedModalView('items');
+  };
+
   // Delete selected unrecognized items
   const deleteSelectedItems = () => {
     const selectedIds = Array.from(selectedUnrecognizedItems);
@@ -620,6 +660,7 @@ export default function Index() {
           setShowUnrecognizedModal(open);
           if (!open) {
             setUnrecognizedModalView('items');
+            setNewCategoryName("");
           }
         }}>
             <DialogContent className="bg-white border-none shadow-lg max-w-sm mx-auto rounded-xl">
@@ -627,11 +668,12 @@ export default function Index() {
                 <div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {unrecognizedModalView === 'categories' && <button onClick={() => setUnrecognizedModalView('items')} className="mr-2 text-[#009C00]">
+                      {(unrecognizedModalView === 'categories' || unrecognizedModalView === 'add-category') && <button onClick={() => setUnrecognizedModalView(unrecognizedModalView === 'add-category' ? 'categories' : 'items')} className="mr-2 text-[#009C00]">
                           ←
                         </button>}
                       <DialogTitle className="text-base font-bold text-black">
-                        {unrecognizedModalView === 'items' ? 'Unrecognized items' : 'Move to'}
+                        {unrecognizedModalView === 'items' ? 'Unrecognized items' : 
+                         unrecognizedModalView === 'categories' ? 'Move to' : 'Add new category'}
                       </DialogTitle>
                     </div>
                     {unrecognizedModalView === 'items' && <span className="text-base font-bold text-black">
@@ -668,14 +710,50 @@ export default function Index() {
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
-                </> : <div className="space-y-0 max-h-96 overflow-y-auto">
-                  {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveSelectedItemsToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{getCategoryEmoji(aisle)}</span>
-                        <span className="text-base font-medium text-[#006428]">{aisle}</span>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-[#006428]" />
-                    </button>)}
+                </> : unrecognizedModalView === 'categories' ? <div className="space-y-0">
+                  <div className="max-h-80 overflow-y-auto">
+                    {grouped.filter(({aisle}) => aisle !== "Unrecognized").map(({aisle}) => <button key={aisle} onClick={() => moveSelectedItemsToCategory(aisle)} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-b-[0.5px] border-[#009C00] last:border-b-0">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{getCategoryEmoji(aisle)}</span>
+                          <span className="text-base font-medium text-[#006428]">{aisle}</span>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-[#006428]" />
+                      </button>)}
+                  </div>
+                  <button onClick={() => setUnrecognizedModalView('add-category')} className="w-full flex items-center justify-between py-4 hover:bg-gray-50 transition-colors border-t-[0.5px] border-[#009C00] mt-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">➕</span>
+                      <span className="text-base font-medium text-[#006428]">Add new category</span>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-[#006428]" />
+                  </button>
+                </div> : <div className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Enter category name</label>
+                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                      <span className="text-lg">{newCategoryName ? generateEmojiForCategory(newCategoryName) : "📦"}</span>
+                      <input
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="Category name"
+                        className="flex-1 bg-transparent border-none outline-none text-base"
+                        onKeyDown={(e) => e.key === 'Enter' && addNewCategory()}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <button 
+                    onClick={addNewCategory}
+                    disabled={!newCategoryName.trim()}
+                    className={`w-full py-3 px-4 rounded-lg font-medium text-base transition-colors ${
+                      newCategoryName.trim() 
+                        ? 'bg-[#004200] text-white hover:bg-[#003000]' 
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Add ➕
+                  </button>
                 </div>}
             </DialogContent>
           </Dialog>
