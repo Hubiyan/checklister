@@ -53,6 +53,8 @@ interface ProcessRequest {
   urls?: string[];
   content?: string; // For when URLs have been fetched and content provided
   image?: string; // Base64 encoded image for handwritten grocery lists
+  images?: string[]; // Multiple base64 encoded images
+  pdfs?: Array<{name: string; type: string; data: string}>; // PDF files
 }
 
 async function fetchUrlContent(url: string): Promise<{ content: string; type: "page" | "video" }> {
@@ -675,6 +677,70 @@ serve(async (req) => {
       }
     }
 
+    // Handle multiple images
+    if (body.images && body.images.length > 0) {
+      console.log(`Processing ${body.images.length} images...`);
+      try {
+        const imageResults = [];
+        
+        for (const image of body.images) {
+          console.log('Processing image...');
+          const result = await processHandwrittenImageWithRetry(image);
+          imageResults.push(result);
+        }
+        
+        // Combine results from all images
+        const combinedCategories = new Map();
+        
+        for (const result of imageResults) {
+          if (result.categories) {
+            for (const category of result.categories) {
+              if (!combinedCategories.has(category.name)) {
+                combinedCategories.set(category.name, {
+                  name: category.name,
+                  items: []
+                });
+              }
+              combinedCategories.get(category.name).items.push(...category.items);
+            }
+          }
+        }
+        
+        const finalResult = {
+          categories: Array.from(combinedCategories.values())
+        };
+        
+        console.log('Multiple images processing completed successfully');
+        return new Response(JSON.stringify(finalResult), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (imageError) {
+        console.error('Multiple images processing failed:', imageError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to process images: ' + imageError.message,
+            status: "error",
+            items: []
+          }), 
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
+    // Handle PDF files (simple text extraction fallback)
+    if (body.pdfs && body.pdfs.length > 0) {
+      console.log(`Processing ${body.pdfs.length} PDF files...`);
+      // For now, we'll add the PDF filenames as items with a note
+      // In a full implementation, you'd want proper PDF text extraction
+      body.pdfs.forEach(pdf => {
+        allItems.push(`PDF: ${pdf.name}`);
+      });
+      contentToProcess += body.pdfs.map(pdf => `PDF file: ${pdf.name}`).join('\n') + '\n';
+    }
+
     // Handle text items
     if (body.items && body.items.length > 0) {
       allItems = [...body.items];
@@ -698,7 +764,7 @@ serve(async (req) => {
       contentToProcess += body.content;
     }
 
-    if (!contentToProcess.trim()) {
+    if (!contentToProcess.trim() && allItems.length === 0) {
       return new Response(
         JSON.stringify({
           status: "no_recipe_found",
