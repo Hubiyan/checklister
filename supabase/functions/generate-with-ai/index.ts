@@ -677,7 +677,8 @@ serve(async (req) => {
       }
     }
 
-    // Handle multiple images
+    // Handle multiple images - collect results but don't return early
+    let imageCategories = new Map();
     if (body.images && body.images.length > 0) {
       console.log(`Processing ${body.images.length} images...`);
       try {
@@ -690,43 +691,25 @@ serve(async (req) => {
         }
         
         // Combine results from all images
-        const combinedCategories = new Map();
-        
         for (const result of imageResults) {
           if (result.categories) {
             for (const category of result.categories) {
-              if (!combinedCategories.has(category.name)) {
-                combinedCategories.set(category.name, {
+              if (!imageCategories.has(category.name)) {
+                imageCategories.set(category.name, {
                   name: category.name,
                   items: []
                 });
               }
-              combinedCategories.get(category.name).items.push(...category.items);
+              imageCategories.get(category.name).items.push(...category.items);
             }
           }
         }
         
-        const finalResult = {
-          categories: Array.from(combinedCategories.values())
-        };
-        
         console.log('Multiple images processing completed successfully');
-        return new Response(JSON.stringify(finalResult), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
       } catch (imageError) {
         console.error('Multiple images processing failed:', imageError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to process images: ' + imageError.message,
-            status: "error",
-            items: []
-          }), 
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+        // Don't return error early, continue with text processing
+        console.log('Continuing with text processing despite image error...');
       }
     }
 
@@ -777,19 +760,51 @@ serve(async (req) => {
       );
     }
 
-    let result;
-    
-    if (!openAIApiKey) {
-      console.log('No OpenAI API key, using fallback');
-      result = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
-    } else {
-      try {
-        result = await processWithAI(contentToProcess, sourceType);
-      } catch (aiError) {
-        console.error('AI processing failed, using fallback:', aiError);
-        result = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
+    // Process text/content if present
+    let textResult = null;
+    if (contentToProcess.trim() || allItems.length > 0) {
+      if (!openAIApiKey) {
+        console.log('No OpenAI API key, using fallback');
+        textResult = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
+      } else {
+        try {
+          textResult = await processWithAI(contentToProcess, sourceType);
+        } catch (aiError) {
+          console.error('AI processing failed, using fallback:', aiError);
+          textResult = fallbackCategorization(allItems.length > 0 ? allItems : [contentToProcess], sourceType);
+        }
       }
     }
+
+    // Combine image results with text results
+    const combinedCategories = new Map();
+    
+    // Add image categories first
+    for (const category of imageCategories.values()) {
+      combinedCategories.set(category.name, {
+        name: category.name,
+        items: [...category.items]
+      });
+    }
+    
+    // Add text categories, merging with existing image categories
+    if (textResult && textResult.categories) {
+      for (const category of textResult.categories) {
+        if (combinedCategories.has(category.name)) {
+          // Merge items from text processing with image items
+          combinedCategories.get(category.name).items.push(...category.items);
+        } else {
+          combinedCategories.set(category.name, {
+            name: category.name,
+            items: [...category.items]
+          });
+        }
+      }
+    }
+
+    const result = {
+      categories: Array.from(combinedCategories.values()).filter(cat => cat.items.length > 0)
+    };
 
     console.log('Final result:', JSON.stringify(result, null, 2));
 
