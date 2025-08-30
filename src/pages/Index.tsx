@@ -8,6 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import Confetti from "react-confetti";
 import { ResponsiveModal } from "@/components/ResponsiveModal";
+import { AttachmentChips, Attachment } from "@/components/AttachmentChips";
+import { MediaPickerSheet } from "@/components/MediaPickerSheet";
+import { AttachmentPreview } from "@/components/AttachmentPreview";
 import Tesseract from "tesseract.js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -148,10 +151,7 @@ function itemsFromAislesJson(json: any): ChecklistItem[] {
 }
 export default function Index() {
   const [screen, setScreen] = useState<"input" | "output">("input");
-  const [inputMode, setInputMode] = useState<"text" | "camera">("text");
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [ocrProgress, setOcrProgress] = useState<number>(0);
   const [loading, setLoading] = useState<"idle" | "ocr" | "ai">("idle");
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -169,6 +169,11 @@ export default function Index() {
   const [unrecognizedModalView, setUnrecognizedModalView] = useState<'items' | 'categories' | 'add-category'>('items');
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showAddCategoryForMove, setShowAddCategoryForMove] = useState(false);
+
+  // New attachment-related state
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
   // Load/save local state
   useEffect(() => {
@@ -204,143 +209,6 @@ export default function Index() {
       items: map.get(k)!
     }));
   }, [items]);
-  const categorize = useCallback(async (rawItems: string[], urls: string[] = []) => {
-    if (rawItems.length === 0 && urls.length === 0) {
-      toast.error("No items or URLs to categorize");
-      return;
-    }
-    setLoading("ai");
-    const t = toast.loading(urls.length > 0 ? "Processing URL and categorizing items…" : "Categorizing items…");
-    try {
-      const requestBody: any = {};
-      if (rawItems.length > 0) requestBody.items = rawItems;
-      if (urls.length > 0) requestBody.urls = urls;
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("generate-with-ai", {
-        body: requestBody
-      });
-      if (error) throw error;
-
-      // Handle new response format
-      if (data.status === "no_recipe_found") {
-        toast.error(data.notice || "No recipe items found in the provided content", {
-          id: t
-        });
-        return;
-      }
-      const next = itemsFromAislesJson(data);
-      setItems(next);
-
-      // Check if there are unrecognized items and show modal
-      const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
-      if (hasUnrecognized) {
-        setTimeout(() => {
-          setShowUnrecognizedModal(true);
-        }, 500); // Small delay to let the UI render
-      }
-      toast.success("Checklist ready", {
-        id: t
-      });
-    } catch (err: any) {
-      const msg = err?.message || "AI categorization failed";
-      toast.error(`${msg}. Check function logs.`, {
-        id: t
-      });
-      console.error('AI categorize error:', err);
-    } finally {
-      setLoading("idle");
-    }
-  }, []);
-  const handleFromText = async () => {
-    const inputText = text.trim();
-    if (!inputText) return;
-
-    // Check if input contains URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = inputText.match(urlRegex) || [];
-    if (urls.length > 0) {
-      // If there are URLs, extract them and get remaining text
-      const remainingText = inputText.replace(urlRegex, '').trim();
-      const textItems = remainingText ? parseLines(remainingText) : [];
-      await categorize(textItems, urls);
-    } else {
-      // No URLs, process as regular text
-      const list = parseLines(inputText);
-      await categorize(list);
-    }
-    if (inputText.length > 0) {
-      setScreen("output");
-    }
-  };
-  const handleFromImage = async () => {
-    if (!file) return toast.error("Choose an image first");
-    
-    setLoading("ai");
-    const t = toast.loading("Reading handwritten grocery list with AI...");
-    
-    try {
-      // Convert file to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove data:image/jpeg;base64, prefix
-          const base64String = result.split(',')[1];
-          resolve(base64String);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      // Send to our enhanced OCR edge function
-      const response = await supabase.functions.invoke('generate-with-ai', {
-        body: { 
-          image: base64
-        }
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      const result = response.data;
-      console.log('AI categorization result:', result);
-
-      // Use the same categorization logic as text flow
-      const next = itemsFromAislesJson(result);
-      setItems(next);
-      
-      // Check if there are unrecognized items and show modal
-      const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
-      if (hasUnrecognized) {
-        setTimeout(() => {
-          setShowUnrecognizedModal(true);
-        }, 500); // Small delay to let the UI render
-      }
-      
-      toast.success(`Successfully extracted ${next.length} items from handwritten list!`, { id: t });
-      
-      if (next.length > 0) {
-        setScreen("output");
-      }
-
-    } catch (e) {
-      console.error('Handwriting OCR error:', e);
-      
-      // Check if it's a rate limiting issue
-      if (e.message && e.message.includes('rate limit')) {
-        toast.error("OpenAI is temporarily busy. Please wait a moment and try again.", { id: t });
-      } else if (e.message && e.message.includes('429')) {
-        toast.error("Service is temporarily busy. Please wait a few seconds and try again.", { id: t });
-      } else {
-        toast.error("Unable to process the handwritten list right now. Please try again in a moment.", { id: t });
-      }
-    } finally {
-      setLoading("idle");
-    }
-  };
   const toggleItem = (item: ChecklistItem) => {
     if (!item.checked) {
       // Item is being checked - show amount modal
@@ -399,23 +267,164 @@ export default function Index() {
   const confirmNewList = () => {
     setItems([]);
     setText("");
-    setFile(null);
+    setAttachments([]);
     setScreen("input");
-    setInputMode("text");
     setShowClearDialog(false);
   };
-  const handleTextareaFocus = async () => {
+  // New attachment-related handlers
+  const handleAttachmentsSelected = async (files: File[]) => {
+    const newAttachments: Attachment[] = files.map(file => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      file,
+      type: file.type.startsWith('image/') ? 'image' : 'pdf',
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+    }));
+    
+    setAttachments(prev => [...prev, ...newAttachments]);
+    toast.success(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments(prev => {
+      const attachment = prev.find(a => a.id === id);
+      if (attachment?.preview) {
+        URL.revokeObjectURL(attachment.preview);
+      }
+      return prev.filter(a => a.id !== id);
+    });
+  };
+
+  const handlePreviewAttachment = (attachment: Attachment) => {
+    setPreviewAttachment(attachment);
+  };
+
+  // Unified ingestion pipeline - extracts and processes all input sources
+  const processAllInputs = async () => {
+    const textItems = text.trim() ? parseLines(text.trim()) : [];
+    
+    // Check if input contains URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = text.match(urlRegex) || [];
+    
+    // Remove URLs from text items to avoid duplication
+    const cleanedTextItems = textItems.filter(item => !urlRegex.test(item));
+    
+    if (cleanedTextItems.length === 0 && urls.length === 0 && attachments.length === 0) {
+      toast.error("Please add some text, URLs, or attachments first");
+      return;
+    }
+
+    setLoading("ai");
+    const hasAttachments = attachments.length > 0;
+    const hasUrls = urls.length > 0;
+    
+    let loadingMessage = "Processing";
+    if (hasAttachments && hasUrls) {
+      loadingMessage = "Processing attachments, URLs and categorizing items...";
+    } else if (hasAttachments) {
+      loadingMessage = "Processing attachments and categorizing items...";
+    } else if (hasUrls) {
+      loadingMessage = "Processing URLs and categorizing items...";
+    } else {
+      loadingMessage = "Categorizing items...";
+    }
+    
+    const t = toast.loading(loadingMessage);
+    
     try {
-      if (navigator.clipboard && navigator.clipboard.readText) {
-        const clipboardText = await navigator.clipboard.readText();
-        if (clipboardText.trim() && !text.trim()) {
-          setText(clipboardText);
-          toast.success("Pasted from clipboard");
+      const requestBody: any = {};
+      
+      if (cleanedTextItems.length > 0) {
+        requestBody.items = cleanedTextItems;
+      }
+      
+      if (urls.length > 0) {
+        requestBody.urls = urls;
+      }
+      
+      if (attachments.length > 0) {
+        // Process attachments - convert to base64
+        const attachmentData = await Promise.all(
+          attachments.map(async (attachment) => {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                const base64String = result.split(',')[1];
+                resolve(base64String);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(attachment.file);
+            });
+            
+            return {
+              name: attachment.name,
+              type: attachment.type,
+              data: base64
+            };
+          })
+        );
+        
+        // Separate images and PDFs
+        const images = attachmentData.filter(a => a.type === 'image');
+        const pdfs = attachmentData.filter(a => a.type === 'pdf');
+        
+        if (images.length > 0) {
+          requestBody.images = images.map(img => img.data);
+        }
+        
+        if (pdfs.length > 0) {
+          requestBody.pdfs = pdfs;
         }
       }
-    } catch (error) {
-      // Clipboard access denied or not available - fail silently
-      console.log("Clipboard access not available");
+      
+      const { data, error } = await supabase.functions.invoke("generate-with-ai", {
+        body: requestBody
+      });
+      
+      if (error) throw error;
+
+      // Handle response format
+      if (data.status === "no_recipe_found") {
+        toast.error(data.notice || "No items found in the provided content", {
+          id: t
+        });
+        return;
+      }
+      
+      const next = itemsFromAislesJson(data);
+      
+      if (next.length === 0) {
+        toast.error("No items could be extracted", { id: t });
+        return;
+      }
+      
+      setItems(next);
+
+      // Check if there are unrecognized items and show modal
+      const hasUnrecognized = next.some(item => item.aisle === "Unrecognized");
+      if (hasUnrecognized) {
+        setTimeout(() => {
+          setShowUnrecognizedModal(true);
+        }, 500);
+      }
+      
+      toast.success(`Successfully processed ${next.length} items!`, { id: t });
+      setScreen("output");
+      
+    } catch (err: any) {
+      console.error('Processing error:', err);
+      
+      if (err.message?.includes('rate limit') || err.message?.includes('429')) {
+        toast.error("Service is busy. Please wait and try again.", { id: t });
+      } else if (err.message?.includes("Couldn't read")) {
+        toast.error("Couldn't read that image/file. Try a clearer photo.", { id: t });
+      } else {
+        toast.error("Processing failed. Please try again.", { id: t });
+      }
+    } finally {
+      setLoading("idle");
     }
   };
 
@@ -615,12 +624,13 @@ export default function Index() {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Amount Modal */}
+          {/* Amount Modal - Updated with hasInputs prop */}
           <ResponsiveModal 
             open={showAmountModal} 
             onOpenChange={setShowAmountModal}
             title={selectedItem ? `Enter price of ${selectedItem.name}` : "Enter price"}
-            position="top"
+            position="bottom"
+            hasInputs={true}
             className="max-w-sm mx-auto bg-white rounded-b-[20px]"
           >
             <div className="pb-5 px-5">
@@ -780,11 +790,12 @@ export default function Index() {
                 </div>}
           </ResponsiveModal>
 
-          {/* Add Category Modal (for long press) */}
+          {/* Add Category Modal (for long press) - Updated with hasInputs prop */}
           <ResponsiveModal 
             open={showAddCategoryForMove} 
             onOpenChange={setShowAddCategoryForMove}
             title="Add new category"
+            hasInputs={true}
           >
             <div className="space-y-4 p-4">
               <div className="space-y-2">
@@ -856,68 +867,74 @@ export default function Index() {
           </p>
         </div>
 
-        {/* Text Input Area */}
+        {/* Input Area */}
         <div className="space-y-6">
+          {/* Main Text Input */}
           <div className="bg-card border border-border rounded-[0.75rem] p-6 min-h-[240px]">
-            <Textarea placeholder="Tap to paste grocery list or recipe URLs..." value={text} onChange={e => setText(e.target.value)} onFocus={handleTextareaFocus} className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 focus:outline-none focus:ring-0 focus:border-none rounded-[0.75rem]" />
+            <Textarea 
+              placeholder="Type, paste grocery list or recipe URLs..." 
+              value={text} 
+              onChange={e => setText(e.target.value)} 
+              onFocus={async () => {
+                try {
+                  if (navigator.clipboard && navigator.clipboard.readText) {
+                    const clipboardText = await navigator.clipboard.readText();
+                    if (clipboardText.trim() && !text.trim()) {
+                      setText(clipboardText);
+                      toast.success("Pasted from clipboard");
+                    }
+                  }
+                } catch (error) {
+                  console.log("Clipboard access not available");
+                }
+              }}
+              className="min-h-[200px] bg-transparent border-none p-0 text-lg placeholder:text-muted-foreground resize-none focus-visible:ring-0 focus:outline-none focus:ring-0 focus:border-none rounded-[0.75rem]" 
+            />
           </div>
 
-          {/* Input Mode Selection */}
-          <div className="flex items-center gap-4">
-            {/* Image Input Button */}
-            <div className="relative">
-              <Button variant="secondary" size="lg" className="w-16 h-16 rounded-[0.75rem] bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 p-0" onClick={() => {
-              if (inputMode === "camera") {
-                setInputMode("text");
-              } else {
-                setInputMode("camera");
-              }
-            }}>
-                <Image className="h-6 w-6 text-primary-foreground" />
-              </Button>
-              <input type="file" accept="image/*" capture="environment" onChange={e => setFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer" />
-            </div>
+          {/* Attachment Chips */}
+          <AttachmentChips 
+            attachments={attachments}
+            onRemove={handleRemoveAttachment}
+            onPreview={handlePreviewAttachment}
+          />
 
-            {/* Get Sorted Button */}
-            <Button onClick={text.trim() ? handleFromText : handleFromImage} disabled={!text.trim() && !file || loading !== "idle"} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-semibold border-0">
-              {loading === "ai" ? "Sorting..." : loading === "ocr" ? `OCR: ${ocrProgress}%` : "Get sorted"}
+          {/* Action Buttons */}
+          <div className="flex items-center gap-4">
+            {/* Image/Media Picker Button */}
+            <Button 
+              variant="secondary" 
+              size="lg" 
+              className="w-16 h-16 rounded-[0.75rem] bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 p-0" 
+              onClick={() => setShowMediaPicker(true)}
+            >
+              <Image className="h-6 w-6 text-primary-foreground" />
+            </Button>
+
+            {/* Generate Checklist Button */}
+            <Button 
+              onClick={processAllInputs}
+              disabled={(!text.trim() && attachments.length === 0) || loading !== "idle"}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 py-4 h-16 rounded-[0.75rem] text-lg font-semibold border-0"
+            >
+              {loading === "ai" ? "Processing..." : "Generate Checklist"}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Button>
           </div>
-
-          {/* Camera/Photos Selection (when image mode is active) */}
-          {inputMode === "camera" && <div className="bg-accent rounded-[0.75rem] p-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center" onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = 'image/*';
-              input.capture = 'environment';
-              input.onchange = e => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file) setFile(file);
-              };
-              input.click();
-            }}>
-                  <Camera className="h-6 w-6 mb-2" />
-                  Camera
-                </Button>
-                <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200 border-0 py-6 h-auto rounded-[0.75rem] text-lg font-semibold flex flex-col items-center" onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = 'image/*';
-              input.onchange = e => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file) setFile(file);
-              };
-              input.click();
-            }}>
-                  <Image className="h-6 w-6 mb-2" />
-                  Photos
-                </Button>
-              </div>
-            </div>}
         </div>
+
+        {/* Media Picker Sheet */}
+        <MediaPickerSheet
+          open={showMediaPicker}
+          onOpenChange={setShowMediaPicker}
+          onAttachmentsSelected={handleAttachmentsSelected}
+        />
+
+        {/* Attachment Preview Modal */}
+        <AttachmentPreview
+          attachment={previewAttachment}
+          onClose={() => setPreviewAttachment(null)}
+        />
       </div>
     </main>;
 }

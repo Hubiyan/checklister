@@ -1,7 +1,8 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSmartToast } from "@/components/SmartToastProvider";
 
 interface ResponsiveModalProps {
   open: boolean;
@@ -10,6 +11,7 @@ interface ResponsiveModalProps {
   children: ReactNode;
   className?: string;
   position?: "top" | "bottom";
+  hasInputs?: boolean; // New prop to indicate if modal contains input fields
 }
 
 export function ResponsiveModal({ 
@@ -18,11 +20,25 @@ export function ResponsiveModal({
   title, 
   children, 
   className = "max-w-sm mx-auto",
-  position = "bottom"
+  position = "bottom",
+  hasInputs = false
 }: ResponsiveModalProps) {
   const isMobile = useIsMobile();
+  const { setSheetState } = useSmartToast();
 
-  if (isMobile && position === "top") {
+  // Apply positioning rule: if hasInputs and would be bottom sheet, force top sheet
+  const effectivePosition = isMobile && hasInputs && position === "bottom" ? "top" : position;
+
+  // Update toast positioning based on sheet state
+  useEffect(() => {
+    if (open) {
+      setSheetState(isMobile ? effectivePosition : "none");
+    } else {
+      setSheetState("none");
+    }
+  }, [open, isMobile, effectivePosition, setSheetState]);
+
+  if (isMobile && effectivePosition === "top") {
     return (
       <div className={`fixed inset-0 z-50 ${open ? 'block' : 'hidden'}`}>
         <div 
