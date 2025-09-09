@@ -630,6 +630,7 @@ function fallbackCategorization(items: string[], sourceType: "text" | "url_page"
 
 serve(async (req) => {
   console.log(`${req.method} ${req.url}`);
+  console.log("OpenAI API Key configured:", !!openAIApiKey);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -641,6 +642,21 @@ serve(async (req) => {
       status: 405, 
       headers: corsHeaders 
     });
+  }
+
+  // Check if OpenAI API key is configured
+  if (!openAIApiKey) {
+    console.error("OpenAI API key not configured");
+    return new Response(
+      JSON.stringify({ 
+        error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase secrets.",
+        success: false 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
   }
 
   try {
