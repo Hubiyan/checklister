@@ -326,7 +326,7 @@ async function processHandwrittenImageWithRetry(imageBase64: string, maxRetries 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o', // Use GPT-4o for vision capabilities
+          model: 'o4-mini-2025-04-16', // Use O4-mini for vision capabilities - optimized for visual tasks
           messages: [
             {
               role: 'system',
@@ -379,8 +379,8 @@ orange`
               ]
             }
           ],
-          max_tokens: 1000,
-          temperature: 0.1,
+          max_completion_tokens: 1000,
+          // temperature not supported in newer models
         }),
       });
 
@@ -482,13 +482,13 @@ Extract grocery items and categorize them according to UAE supermarket aisles. R
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using legacy model for reliable results
+        model: 'gpt-4.1-2025-04-14', // Using latest GPT-4.1 for reliable results
         messages: [
           { role: 'system', content: createSystemPrompt() },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 2000,
-        temperature: 0.1,
+        max_completion_tokens: 2000,
+        // temperature not supported in newer models
       }),
     });
 
