@@ -379,30 +379,9 @@ export default function Index() {
         }
       }
       
-      // TEST: First try the simple test function to verify edge functions work
-      console.log('Testing edge function connectivity...');
-      const { data: testData, error: testError } = await supabase.functions.invoke("test-connection", {
-        body: { test: true }
-      });
+      console.log('Calling new process-list function...');
       
-      if (testError) {
-        console.error('Test function failed:', testError);
-        throw new Error(`Edge function connection failed: ${testError.message}`);
-      }
-      
-      console.log('Test function response:', testData);
-      
-      if (!testData?.success) {
-        throw new Error('Test function did not return success');
-      }
-      
-      if (!testData?.hasApiKey) {
-        throw new Error('OpenAI API key is not configured in Supabase secrets');
-      }
-      
-      console.log('Edge functions working, now calling main function...');
-      
-      const { data, error } = await supabase.functions.invoke("generate-with-ai", {
+      const { data, error } = await supabase.functions.invoke("process-list", {
         body: requestBody
       });
       
