@@ -35,20 +35,26 @@ serve(async (req) => {
       );
     }
 
-    // Step 2: Parse request
+    // Step 2: Parse request and validate inputs (be forgiving)
     const body = await req.json();
     console.log('Request body:', JSON.stringify(body, null, 2));
-    
-    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-      console.error('No items provided in request');
+
+    const items = Array.isArray(body?.items) ? body.items : [];
+    const urls = Array.isArray(body?.urls) ? body.urls : [];
+    const images = Array.isArray(body?.images) ? body.images : [];
+    const pdfs = Array.isArray(body?.pdfs) ? body.pdfs : [];
+
+    if (items.length === 0) {
+      console.warn('No text items provided. URLs or attachments present?', { hasUrls: urls.length > 0, hasImages: images.length > 0, hasPdfs: pdfs.length > 0 });
+      // Gracefully return a friendly message instead of 400 to let the UI inform the user
       return new Response(
         JSON.stringify({ 
-          error: 'No items provided',
-          details: 'Request must include an items array with at least one item'
+          status: 'no_recipe_found',
+          notice: 'Please paste a list of items as text. URL and attachment parsing is not supported yet.'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
+          status: 200
         }
       );
     }
@@ -64,7 +70,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -120,7 +126,7 @@ Return JSON only in this format:
             content: `Categorize these grocery items:\n${itemsText}`
           }
         ],
-        max_completion_tokens: 2000,
+        max_tokens: 1200,
       }),
     });
 
@@ -142,7 +148,30 @@ Return JSON only in this format:
     const data = await response.json();
     console.log('OpenAI response:', JSON.stringify(data, null, 2));
     
-    const result = JSON.parse(data.choices[0].message.content);
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error('OpenAI response missing content');
+      return new Response(
+        JSON.stringify({ error: 'Empty response from OpenAI' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    let result;
+    try {
+      result = JSON.parse(content);
+    } catch (e) {
+      console.error('Failed to parse model output as JSON:', content);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to parse model output',
+          details: String(e),
+          preview: String(content).slice(0, 300)
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     console.log('Parsed result:', JSON.stringify(result, null, 2));
 
     return new Response(JSON.stringify(result), {

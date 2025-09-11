@@ -423,7 +423,8 @@ export default function Index() {
       } else if (err.message?.includes("Couldn't read")) {
         toast.error("Couldn't read that image/file. Try a clearer photo.", { id: t });
       } else {
-        toast.error("Processing failed. Please try again.", { id: t });
+        const detail = err?.message || err?.error || 'Unknown error';
+        toast.error(`Processing failed: ${detail}` , { id: t });
       }
     } finally {
       setLoading("idle");
