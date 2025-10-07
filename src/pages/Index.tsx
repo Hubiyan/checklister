@@ -344,39 +344,35 @@ export default function Index() {
       }
       
       if (attachments.length > 0) {
-        // Process attachments - convert to base64
-        const attachmentData = await Promise.all(
-          attachments.map(async (attachment) => {
-            const base64 = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                const result = reader.result as string;
-                const base64String = result.split(',')[1];
-                resolve(base64String);
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(attachment.file);
+        // Extract text from image attachments using OCR (client-side)
+        const imageAttachments = attachments.filter(a => a.type === 'image');
+        if (imageAttachments.length > 0) {
+          const ocrLists = await Promise.all(
+            imageAttachments.map(async (a) => {
+              try {
+                const result = await Tesseract.recognize(a.file, 'eng');
+                const raw = result?.data?.text || '';
+                return parseLines(raw);
+              } catch (e) {
+                console.error('OCR error:', e);
+                return [] as string[];
+              }
+            })
+          );
+          const ocrItems = ocrLists.flat();
+          if (ocrItems.length > 0) {
+            const existing = Array.isArray(requestBody.items) ? requestBody.items as string[] : [];
+            const combined = [...existing, ...ocrItems];
+            const seen = new Set<string>();
+            requestBody.items = combined.filter((s) => {
+              const key = s.trim().toLowerCase();
+              if (!key || seen.has(key)) return false;
+              seen.add(key);
+              return true;
             });
-            
-            return {
-              name: attachment.name,
-              type: attachment.type,
-              data: base64
-            };
-          })
-        );
-        
-        // Separate images and PDFs
-        const images = attachmentData.filter(a => a.type === 'image');
-        const pdfs = attachmentData.filter(a => a.type === 'pdf');
-        
-        if (images.length > 0) {
-          requestBody.images = images.map(img => img.data);
+          }
         }
-        
-        if (pdfs.length > 0) {
-          requestBody.pdfs = pdfs;
-        }
+        // Note: PDFs are not handled in-browser here. They won't be sent to backend.
       }
       
       console.log('Calling new process-list function...');

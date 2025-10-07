@@ -17,16 +17,16 @@ serve(async (req) => {
   }
 
   try {
-    // Step 1: Check environment
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    console.log('OpenAI API Key exists:', !!openAIApiKey);
+    // Step 1: Check environment (Lovable AI)
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    console.log('Lovable AI Key exists:', !!lovableApiKey);
     
-    if (!openAIApiKey) {
-      console.error('OpenAI API key not found in environment');
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not found in environment');
       return new Response(
         JSON.stringify({ 
-          error: 'OpenAI API key not configured. Please check your Supabase secrets.',
-          details: 'OPENAI_API_KEY environment variable is missing'
+          error: 'AI not configured',
+          details: 'LOVABLE_API_KEY environment variable is missing. Enable Lovable AI in project settings.'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,18 +59,18 @@ serve(async (req) => {
       );
     }
 
-    // Step 3: Process with OpenAI
-    const itemsText = body.items.join('\n');
+    // Step 3: Process with Lovable AI Gateway (Gemini)
+    const itemsText = items.join('\n');
     console.log('Processing items:', itemsText);
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',
@@ -125,34 +125,39 @@ Return JSON only in this format:
             role: 'user',
             content: `Categorize these grocery items:\n${itemsText}`
           }
-        ],
-        max_tokens: 1200,
+        ]
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      return new Response(
-        JSON.stringify({ 
-          error: `OpenAI API error: ${response.status}`,
-          details: errorText
-        }),
-        { 
+      console.error('AI gateway error:', response.status, errorText);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: 'Rate limits exceeded, please try again later.' }), {
+          status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: 'Payment required, please add funds to your Lovable AI workspace.' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(
+        JSON.stringify({ error: 'AI gateway error', details: errorText }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
     const data = await response.json();
-    console.log('OpenAI response:', JSON.stringify(data, null, 2));
-    
+    console.log('AI response:', JSON.stringify(data, null, 2));
+
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
-      console.error('OpenAI response missing content');
+      console.error('AI response missing content');
       return new Response(
-        JSON.stringify({ error: 'Empty response from OpenAI' }),
+        JSON.stringify({ error: 'Empty response from AI' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
