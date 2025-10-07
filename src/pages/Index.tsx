@@ -878,7 +878,7 @@ export default function Index() {
           {/* Main Text Input */}
           <div className="bg-card border border-border rounded-[0.75rem] p-6 min-h-[240px]">
             <Textarea 
-              placeholder="Type, paste grocery list or recipe URLs..." 
+              placeholder="Tap to paste or enter items" 
               value={text} 
               onChange={e => setText(e.target.value)} 
               onFocus={async () => {
