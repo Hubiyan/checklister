@@ -162,9 +162,22 @@ Return JSON only in this format:
       );
     }
 
+    // Normalize to raw JSON (strip markdown fences or extract JSON object)
+    let jsonText = String(content).trim();
+    const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenceMatch) {
+      jsonText = fenceMatch[1].trim();
+    } else {
+      const firstBrace = jsonText.indexOf('{');
+      const lastBrace = jsonText.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonText = jsonText.slice(firstBrace, lastBrace + 1).trim();
+      }
+    }
+
     let result;
     try {
-      result = JSON.parse(content);
+      result = JSON.parse(jsonText);
     } catch (e) {
       console.error('Failed to parse model output as JSON:', content);
       return new Response(
