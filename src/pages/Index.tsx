@@ -638,7 +638,7 @@ export default function Index() {
                   <img src="/lovable-uploads/4083dbc8-767b-4278-9ad6-0d3a989bf171.png" alt="AED" className="w-8 h-8" />
                   <input
                     type="number"
-                    inputMode="decimal"
+                    inputMode="numeric"
                     placeholder="0.00"
                     value={amountInput}
                     onChange={e => setAmountInput(e.target.value)}
@@ -853,6 +853,13 @@ export default function Index() {
               </Button>
             </div>
           </ResponsiveModal>
+
+          {/* Footer */}
+          <div className="text-center py-6">
+            <p className="text-xs text-muted-foreground">
+              Made by <a href="https://hubiyan.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Hubiyan</a>
+            </p>
+          </div>
         </div>
       </main>;
   }
@@ -934,6 +941,13 @@ export default function Index() {
           attachment={previewAttachment}
           onClose={() => setPreviewAttachment(null)}
         />
+
+        {/* Footer */}
+        <div className="text-center py-6">
+          <p className="text-xs text-muted-foreground">
+            Made by <a href="https://hubiyan.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Hubiyan</a>
+          </p>
+        </div>
       </div>
     </main>;
 }

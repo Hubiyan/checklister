@@ -45,7 +45,7 @@ export function ResponsiveModal({
           className="fixed inset-0 bg-black/20" 
           onClick={() => onOpenChange(false)}
         />
-        <div className="fixed top-0 left-0 right-0 bg-white rounded-b-[12px] shadow-lg z-50">
+        <div className="fixed top-0 left-0 right-0 bg-white rounded-b-[12px] shadow-lg z-50 px-5">
           {title && (
             <div className="py-3 px-4">
               <h2 className="text-base font-bold text-black">
@@ -62,7 +62,7 @@ export function ResponsiveModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="bg-white border-none shadow-lg rounded-t-xl">
+        <DrawerContent className="bg-white border-none shadow-lg rounded-t-xl px-5">
           {title && (
             <DrawerHeader className="py-3">
               <DrawerTitle className="text-base font-bold text-black">
