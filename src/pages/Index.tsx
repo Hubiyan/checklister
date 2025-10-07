@@ -945,7 +945,7 @@ export default function Index() {
         {/* Footer */}
         <div className="text-center py-6">
           <p className="text-xs text-muted-foreground">
-            Made by <a href="https://hubiyan.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Hubiyan</a>
+            Made by <a href="https://hubiyan.com" target="_blank" rel="noopener noreferrer" className="text-primary underline font-semibold">Hubiyan</a>
           </p>
         </div>
       </div>
