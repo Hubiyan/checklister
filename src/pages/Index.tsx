@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { AlertTriangle, Image, Camera, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -175,6 +175,9 @@ export default function Index() {
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
+  // Ref for amount input auto-focus
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
   // Load/save local state
   useEffect(() => {
     try {
@@ -261,6 +264,19 @@ export default function Index() {
       return () => clearTimeout(timer);
     }
   }, [checkedItemsCount, items.length]);
+
+  // Auto-focus amount input when modal opens on mobile
+  useEffect(() => {
+    if (showAmountModal && amountInputRef.current) {
+      // Delay to ensure modal is fully rendered
+      const timer = setTimeout(() => {
+        amountInputRef.current?.focus();
+        amountInputRef.current?.select();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [showAmountModal]);
+
   const handleNewList = () => {
     setShowClearDialog(true);
   };
@@ -637,6 +653,7 @@ export default function Index() {
                 <div className="flex items-center">
                   <img src="/lovable-uploads/4083dbc8-767b-4278-9ad6-0d3a989bf171.png" alt="AED" className="w-8 h-8" />
                   <input
+                    ref={amountInputRef}
                     type="number"
                     inputMode="numeric"
                     placeholder="0.00"
@@ -646,15 +663,6 @@ export default function Index() {
                       if (e.key === 'Enter') {
                         saveAmount();
                       }
-                    }}
-                    autoFocus
-                    onFocus={e => {
-                      e.target.select();
-                      // Ensure keyboard opens on mobile
-                      setTimeout(() => e.target.focus(), 100);
-                    }}
-                    onTouchStart={() => {
-                      // Additional trigger for mobile keyboard
                     }}
                     className="bg-transparent border-none outline-none text-[#006F00] font-bold text-[32px] leading-[100%] font-[Manrope] placeholder:text-[#006F00] placeholder:opacity-60 ml-2 w-full p-[8px]"
                   />
